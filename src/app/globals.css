@@ -1,0 +1,108 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap');
+
+:root {
+  --foreground: #0f172a;
+  --background: #f8fafc;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  color: var(--foreground);
+  background: var(--background);
+  font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 99px; }
+::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+
+/* Calendar range highlight */
+.rdp-day_selected { background: #0ea5e9 !important; color: white !important; }
+.rdp-day_range_middle { background: #e0f2fe !important; color: #0369a1 !important; }
+
+/* Skeleton pulse */
+@keyframes skeleton-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
+}
+.skeleton-pulse { animation: skeleton-pulse 1.5s ease-in-out infinite; }
+
+/* AI gradient shimmer */
+@keyframes gradient-shift {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+.gradient-animate {
+  background-size: 200% 200%;
+  animation: gradient-shift 3s ease infinite;
+}
+
+/* Plavajoči gumb prevoza — nežen pulz za pozornost */
+@keyframes transport-fab-pulse {
+  0%,
+  100% {
+    box-shadow:
+      0 10px 32px -8px rgba(14, 165, 233, 0.55),
+      0 0 0 0 rgba(14, 165, 233, 0.2);
+  }
+  50% {
+    box-shadow:
+      0 14px 40px -4px rgba(14, 165, 233, 0.7),
+      0 0 0 10px rgba(14, 165, 233, 0.08);
+  }
+}
+.transport-fab-pulse {
+  animation: transport-fab-pulse 2.4s ease-in-out infinite;
+}
+.transport-fab-pulse:hover {
+  animation: none;
+  box-shadow:
+    0 16px 44px -4px rgba(14, 165, 233, 0.75),
+    0 0 0 4px rgba(14, 165, 233, 0.15);
+}
+
+/* Loader: nežno pulziranje logotipa skybooplan */
+@keyframes skyboo-logo-pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.35;
+  }
+}
+.skyboo-logo-pulse {
+  animation: skyboo-logo-pulse 2s ease-in-out infinite;
+}
+
+/* AnimatedMap: tile canvas mora zapolniti vsebnik */
+.animated-map-minimal .mapboxgl-map {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+.animated-map-minimal .mapboxgl-canvas {
+  width: 100% !important;
+  height: 100% !important;
+}
+
+/* AnimatedMap: brez Mapbox UI kontrol */
+.animated-map-minimal .mapboxgl-ctrl-top-right,
+.animated-map-minimal .mapboxgl-ctrl-top-left,
+.animated-map-minimal .mapboxgl-ctrl-bottom-right,
+.animated-map-minimal .mapboxgl-ctrl-bottom-left,
+.animated-map-minimal .mapboxgl-ctrl-group {
+  display: none !important;
+}

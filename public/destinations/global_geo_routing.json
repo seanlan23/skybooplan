@@ -1,0 +1,7 @@
+{
+  "global_routing_laws": {
+    "linear_travel_rule": "AI mora pred generiranjem razporediti vse želene kraje na geografsko premico (od najbližjega letališču do najbolj oddaljenega). Potovanje mora potekati strogo v eni smeri (vzhod->zahod, sever->jug) ali kot sklenjen krog.",
+    "anti_zigzag_law": "Prepovedano je vračanje nazaj skozi že obiskane regije. Če potnik potuje skozi točke A -> B -> C, je vrnitev na točko B sredi potovanja strogo prepovedana, razen če gre za končni povratek na izstopno letališče.",
+    "hub_and_spoke_exception": "Če je geografija države otoška (npr. Filipini), se lahko glavno mesto uporabi kot vmesno vozlišče le, če med otokoma ni direktne letalske ali ladijske povezave."
+  }
+}

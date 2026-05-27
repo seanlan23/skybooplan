@@ -1,0 +1,402 @@
+'use client'
+import { parseISO, startOfDay } from 'date-fns'
+import { reanchorItineraryToArrival } from '@/lib/itineraryDates'
+import { computeStayWindowForFirstLocation } from '@/lib/itineraryStay'
+import {
+  buildCombinedSpecialRequests,
+  buildItineraryPlannerInput,
+  computeTravelNightsForPlanner,
+  getPlannerDestinationLabel,
+  resolvePlannerArrivalIso,
+} from '@/lib/itineraryPlannerContext'
+import { buildAiPlannerSubmissionPayload } from '@/lib/aiPlannerSubmission'
+import {
+  aiTravelTempoToPromptLabel,
+  isAiPlannerPrefsValid,
+} from '@/lib/aiPlannerTempo'
+import {
+  resolveDailyBudgetForPrompt,
+  travelStyleToPromptLabel,
+} from '@/lib/plannerPreferences'
+import type { ItineraryPlannerInput } from '@/lib/itineraryPrompt'
+import { useAccomStore } from '@/store/useAccomStore'
+import { usePlannerStore } from '@/store/usePlannerStore'
+import { useSearchStore } from '@/store/useSearchStore'
+import { useSelectedFlightStore } from '@/store/useSelectedFlightStore'
+import type { HotelsOnlyContext } from '@/store/usePlannerStore'
+import { sanitizeHotelLocation } from '@/lib/bookingLocation'
+import { normalizeItineraryDays, syncItineraryDayLabels } from '@/lib/normalizeItinerary'
+import { normalizeTripSummary } from '@/lib/itineraryPrompt'
+import type { ItineraryDay, ItineraryTripSummary } from '@/types/itinerary.types'
+import { useCinematicMapStore } from '@/store/useCinematicMapStore'
+
+type StreamCallbacks = {
+  onDone: (days: ItineraryDay[], tripSummary: ItineraryTripSummary | null) => void
+  onPartial?: (days: ItineraryDay[]) => void
+}
+
+async function consumeItineraryStream(
+  res: Response,
+  callbacks: StreamCallbacks,
+  setProgress: (n: number) => void
+) {
+  const { onDone, onPartial } = callbacks
+  if (!res.body) throw new Error('No response body')
+
+  const reader = res.body.getReader()
+  const decoder = new TextDecoder()
+  let progress = 5
+  const progressInterval = setInterval(() => {
+    progress = Math.min(progress + 3, 90)
+    setProgress(progress)
+  }, 400)
+
+  while (true) {
+    const { done, value } = await reader.read()
+    if (done) break
+
+    const text = decoder.decode(value)
+    for (const line of text.split('\n')) {
+      if (!line.startsWith('data: ')) continue
+      try {
+        const json = JSON.parse(line.slice(6))
+        if (json.partialItinerary) {
+          const partial = normalizeItineraryDays(json.partialItinerary as unknown[])
+          onPartial?.(partial)
+        }
+        if (json.done && json.itinerary) {
+          clearInterval(progressInterval)
+          setProgress(100)
+          const days = normalizeItineraryDays(json.itinerary as unknown[])
+          const tripSummary = json.tripSummary
+            ? normalizeTripSummary(json.tripSummary)
+            : null
+          onDone(days, tripSummary)
+        }
+      } catch {
+        // delni chunk
+      }
+    }
+  }
+  clearInterval(progressInterval)
+  setProgress(100)
+}
+
+function buildPlannerPayload(
+  destination: string,
+  travelNights: number,
+  plannerInput: ItineraryPlannerInput
+) {
+  return {
+    destination,
+    travelNights,
+    plannerInput,
+  }
+}
+
+export function useAIItinerary() {
+  const search = useSearchStore()
+  const {
+    setItinerary,
+    setTripSummary,
+    setIsGenerating,
+    setProgress,
+    customLocations,
+    dailyBudgetPerPerson,
+    travelStyle,
+    travelTempo,
+    specialRequestsText,
+  } = usePlannerStore()
+  const selectedFlight = useSelectedFlightStore((s) => s.selectedFlight)
+  const hotelsOnlyContext = usePlannerStore((s) => s.hotelsOnlyContext)
+
+  function notifyMakeOnAiGenerate() {
+    if (!travelTempo || !isAiPlannerPrefsValid(travelTempo, specialRequestsText)) return
+    const submission = buildAiPlannerSubmissionPayload(
+      search,
+      travelTempo,
+      specialRequestsText,
+      selectedFlight
+    )
+    void fetch('/api/search/notify', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(submission),
+    })
+  }
+
+  const generate = async () => {
+    if (!selectedFlight) return
+    if (!isAiPlannerPrefsValid(travelTempo, specialRequestsText)) return
+
+    const travelTypeLabel = aiTravelTempoToPromptLabel(travelTempo!)
+    notifyMakeOnAiGenerate()
+
+    const plannerInput = buildItineraryPlannerInput({
+      searchMode: search.searchMode,
+      destination: search.destination,
+      hotelDestination: search.hotelDestination,
+      departureDate: search.departureDate,
+      returnDate: search.returnDate,
+      adults: search.adults,
+      children: search.children,
+      cabinClass: search.cabinClass,
+      selectedFlight,
+      travelType: travelTypeLabel,
+      dailyBudget: resolveDailyBudgetForPrompt(dailyBudgetPerPerson),
+      specialRequests: buildCombinedSpecialRequests(specialRequestsText, []),
+    })
+
+    setIsGenerating(true)
+    setProgress(0)
+    setItinerary([])
+    setTripSummary(null)
+    useCinematicMapStore.getState().startCinematic()
+
+    const alignDays = (raw: ItineraryDay[]) =>
+      syncItineraryDayLabels(
+        reanchorItineraryToArrival(
+          raw,
+          selectedFlight.outboundArrivalAt,
+          selectedFlight.destinationLabel
+        )
+      )
+
+    try {
+      const res = await fetch('/api/ai/itinerary', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          ...buildPlannerPayload(
+            selectedFlight.destinationLabel,
+            selectedFlight.travelNights,
+            plannerInput
+          ),
+          selectedFlight,
+        }),
+      })
+
+      await consumeItineraryStream(
+        res,
+        {
+          onPartial: (raw) => {
+            const aligned = alignDays(raw)
+            setItinerary(aligned)
+            useCinematicMapStore.getState().setStreamingDays(aligned)
+          },
+          onDone: (raw, tripSummary) => {
+          const aligned = alignDays(raw)
+          setItinerary(aligned)
+          setTripSummary(tripSummary)
+          useCinematicMapStore.getState().setStreamingDays(aligned)
+          useCinematicMapStore.getState().setPhase('complete')
+          useAccomStore.getState().clearUserPickedHotel()
+
+          const anchor = startOfDay(parseISO(selectedFlight.outboundArrivalAt))
+          const stay = computeStayWindowForFirstLocation(aligned, anchor)
+          if (stay) {
+            const loc = sanitizeHotelLocation(stay.location)
+            usePlannerStore.getState().setActiveLocation(loc)
+            useAccomStore.getState().setActiveLocation(
+              loc,
+              { checkIn: stay.checkIn, checkOut: stay.checkOut },
+              { userPicked: false, clearResults: true }
+            )
+            useAccomStore.getState().triggerHotelSearch()
+          }
+          },
+        },
+        setProgress
+      )
+    } catch (err) {
+      console.error('AI itinerary error:', err)
+    } finally {
+      setTimeout(() => {
+        setIsGenerating(false)
+        setProgress(0)
+      }, 500)
+    }
+  }
+
+  const generateHotelsOnly = async (ctx: HotelsOnlyContext) => {
+    if (!isAiPlannerPrefsValid(travelTempo, specialRequestsText)) return
+
+    const travelTypeLabel = aiTravelTempoToPromptLabel(travelTempo!)
+    notifyMakeOnAiGenerate()
+
+    const plannerInput = buildItineraryPlannerInput({
+      searchMode: 'hotels_only',
+      destination: null,
+      hotelDestination: search.hotelDestination,
+      departureDate: ctx.checkIn,
+      returnDate: ctx.checkOut,
+      adults: search.adults,
+      children: search.children,
+      selectedFlight: null,
+      hotelsOnlyDestinationLabel: ctx.destinationLabel,
+      travelType: travelTypeLabel,
+      dailyBudget: resolveDailyBudgetForPrompt(dailyBudgetPerPerson),
+      specialRequests: buildCombinedSpecialRequests(specialRequestsText, []),
+    })
+
+    setIsGenerating(true)
+    setProgress(0)
+    setItinerary([])
+    setTripSummary(null)
+
+    try {
+      const res = await fetch('/api/ai/itinerary', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          ...buildPlannerPayload(ctx.destinationLabel, ctx.travelNights, plannerInput),
+          hotelsOnly: { arrivalAt: ctx.arrivalAt },
+        }),
+      })
+
+      if (!res.ok) throw new Error('AI načrt ni uspel')
+
+      await consumeItineraryStream(
+        res,
+        {
+          onDone: (raw, tripSummary) => {
+            const aligned = syncItineraryDayLabels(
+              reanchorItineraryToArrival(raw, ctx.arrivalAt, ctx.destinationLabel)
+            )
+            setItinerary(aligned)
+            setTripSummary(tripSummary)
+            useAccomStore.getState().clearUserPickedHotel()
+          },
+        },
+        setProgress
+      )
+    } catch (err) {
+      console.error('AI hotels-only itinerary error:', err)
+      throw err
+    } finally {
+      setTimeout(() => {
+        setIsGenerating(false)
+        setProgress(0)
+      }, 500)
+    }
+  }
+
+  /** Ročni zavihek: destinacija iz iskalnika, let ni obvezen. */
+  const generateManual = async () => {
+    const destinationLabel = getPlannerDestinationLabel({
+      searchMode: search.searchMode,
+      destination: search.destination,
+      hotelDestination: search.hotelDestination,
+      hotelsOnlyContext,
+      selectedFlight,
+    })
+    if (!destinationLabel) return
+
+    const travelNights = computeTravelNightsForPlanner({
+      departureDate: search.departureDate,
+      returnDate: search.returnDate,
+      selectedFlight,
+      hotelsOnlyContext,
+    })
+
+    const arrivalAt = resolvePlannerArrivalIso({
+      departureDate: search.departureDate,
+      selectedFlight,
+      hotelsOnlyContext,
+    })
+
+    const plannerInput = buildItineraryPlannerInput({
+      searchMode: search.searchMode,
+      destination: search.destination,
+      hotelDestination: search.hotelDestination,
+      departureDate: search.departureDate,
+      returnDate: search.returnDate,
+      adults: search.adults,
+      children: search.children,
+      cabinClass: search.cabinClass,
+      selectedFlight,
+      hotelsOnlyDestinationLabel: hotelsOnlyContext?.destinationLabel,
+      travelType: travelStyleToPromptLabel(travelStyle),
+      dailyBudget: resolveDailyBudgetForPrompt(dailyBudgetPerPerson),
+      specialRequests: buildCombinedSpecialRequests(specialRequestsText, customLocations),
+    })
+
+    setIsGenerating(true)
+    setProgress(0)
+    setItinerary([])
+    setTripSummary(null)
+
+    try {
+      const body: Record<string, unknown> = {
+        ...buildPlannerPayload(destinationLabel, travelNights, plannerInput),
+      }
+      if (selectedFlight?.outboundArrivalAt) {
+        body.selectedFlight = selectedFlight
+      } else {
+        body.hotelsOnly = { arrivalAt: arrivalAt }
+      }
+
+      const res = await fetch('/api/ai/itinerary', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      })
+
+      if (!res.ok) throw new Error('AI načrt ni uspel')
+
+      await consumeItineraryStream(
+        res,
+        {
+          onDone: (raw, tripSummary) => {
+          const aligned = syncItineraryDayLabels(
+            reanchorItineraryToArrival(raw, arrivalAt, destinationLabel)
+          )
+          setItinerary(aligned)
+          setTripSummary(tripSummary)
+          useAccomStore.getState().clearUserPickedHotel()
+
+          if (selectedFlight?.outboundArrivalAt) {
+            const anchor = startOfDay(parseISO(selectedFlight.outboundArrivalAt))
+            const stay = computeStayWindowForFirstLocation(aligned, anchor)
+            if (stay) {
+              const loc = sanitizeHotelLocation(stay.location)
+              usePlannerStore.getState().setActiveLocation(loc)
+              useAccomStore.getState().setActiveLocation(
+                loc,
+                { checkIn: stay.checkIn, checkOut: stay.checkOut },
+                { userPicked: false, clearResults: true }
+              )
+              useAccomStore.getState().triggerHotelSearch()
+            }
+          } else if (search.departureDate && search.returnDate) {
+            const loc = sanitizeHotelLocation(
+              aligned[0]?.location ?? destinationLabel
+            )
+            usePlannerStore.getState().setActiveLocation(loc)
+            useAccomStore.getState().setActiveLocation(
+              loc,
+              {
+                checkIn: startOfDay(search.departureDate),
+                checkOut: startOfDay(search.returnDate),
+              },
+              { userPicked: false, clearResults: true }
+            )
+            useAccomStore.getState().triggerHotelSearch()
+          }
+          },
+        },
+        setProgress
+      )
+    } catch (err) {
+      console.error('AI manual itinerary error:', err)
+      throw err
+    } finally {
+      setTimeout(() => {
+        setIsGenerating(false)
+        setProgress(0)
+      }, 500)
+    }
+  }
+
+  return { generate, generateHotelsOnly, generateManual }
+}

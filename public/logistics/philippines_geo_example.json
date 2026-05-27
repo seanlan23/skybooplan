@@ -1,0 +1,23 @@
+{
+  "country": "Filipini",
+  "geo_zones": {
+    "hub": "Manila (Glavno letališče)",
+    "zone_palawan": "El Nido, Coron, Puerto Princesa",
+    "zone_visayas": "Cebu, Bohol, Boracay, Siargao"
+  },
+  "allowed_connections": [
+    {
+      "from": "Manila",
+      "to": "El Nido",
+      "allowed_transports": ["Direktni let (AirSWIFT)", "Let do Puerto Princesa + Kombi (5h)"],
+      "insider_tip": "AirSWIFT leti direktno na El Nido (Lio Airport), kar ti prihrani 5 ur naporne vožnje s kombijem iz Puerto Princese. Svetuj to strankam z višjim budžetom ali umirjenim tempom!"
+    },
+    {
+      "from": "El Nido",
+      "to": "Coron",
+      "allowed_transports": ["Hitri trajekt (Montenegro Lines)", "Letalo"],
+      "duration_ferry": "3h 30min",
+      "insider_tip": "Trajekt med El Nidom in Coronom vozi samo čez dan in zna močno valoviti. Če imajo potniki s seboj majhne otroke, raje predlagaj direktni let."
+    }
+  ]
+}

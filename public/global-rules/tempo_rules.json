@@ -1,0 +1,28 @@
+{
+  "universal_tempo_rules": [
+    {
+      "location_type": "Metropola / Glavno mesto / Vstopna točka",
+      "example": "Bangkok, Manila, Tokio, New York",
+      "max_days_umirjeno": 1,
+      "max_days_sprosceno": 2,
+      "max_days_intenzivno": 3,
+      "logic": "Samo za pristanek, privajanje na časovno razliko in ogled glavnih ikon. Predolgo bivanje v velikih mestih potnike utruja."
+    },
+    {
+      "location_type": "Kulturno / Zgodovinsko / Naravno središče",
+      "example": "Chiang Mai, Ubud, Kyoto, Rim",
+      "max_days_umirjeno": 2,
+      "max_days_sprosceno": 3,
+      "max_days_intenzivno": 4,
+      "logic": "Fokus na doživetjih, izletih v naravo in lokalni kulturi."
+    },
+    {
+      "location_type": "Destinacija za sprostitev / Otoki / Plaža",
+      "example": "Phuket, El Nido, Bali, Amalfi",
+      "max_days_umirjeno": 10,
+      "max_days_sprosceno": 7,
+      "max_days_intenzivno": 4,
+      "logic": "Čas za umiritev, plažo in izlete z ladjicami. Pri intenzivnem tempu se tukaj čas skrajša, da se vidi več različnih krajev."
+    }
+  ]
+}

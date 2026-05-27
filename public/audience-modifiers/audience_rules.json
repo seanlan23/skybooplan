@@ -1,0 +1,11 @@
+{
+  "audience_modifiers": [
+    {
+      "keyword": "otroci",
+      "rules": {
+        "transport_restrictions": "Stroga prepoved prevozov, ki trajajo neprekinjeno več kot 3 ure brez postanka. Izloči neudobne lokalne prevoze (npr. majhne gliserje na odprtem morju ali natrpane minibuse).",
+        "activity_filter": "Vsak dan mora vsebovati vsaj eno aktivnost primerno za otroke (bazen, živalski park, interaktivni muzej). Tempo se avtomatsko upočasni za 20%."
+      }
+    }
+  ]
+}
