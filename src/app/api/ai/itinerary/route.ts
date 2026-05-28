@@ -1,3 +1,5 @@
+export const dynamic = 'force-dynamic'
+
 import { NextRequest } from 'next/server'
 import OpenAI from 'openai'
 import {
@@ -8,12 +10,12 @@ import {
 import {
   buildFlightPackage,
   buildHotelsOnlyPackage,
-  buildItinerarySystemPrompt,
   buildItineraryUserMessage,
   enforceShortTripItinerary,
   parseItineraryResponse,
   type ItineraryPlannerInput,
 } from '@/lib/itineraryPrompt'
+import { buildSkybooplanItinerarySystemPrompt } from '@/lib/skybooplanItinerarySystemPrompt'
 import { buildFlightContextForAI, formatFlightTimeForPrompt } from '@/lib/flightPromptContext'
 import { mergeItineraryDaysByNumber } from '@/lib/normalizeItinerary'
 import { parseItineraryFromStreamBuffer, tryParsePartialItinerary } from '@/lib/tryParsePartialItinerary'
@@ -120,7 +122,7 @@ export async function POST(req: NextRequest) {
     travelNights,
   }
 
-  const systemPrompt = buildItinerarySystemPrompt(planner)
+  const systemPrompt = buildSkybooplanItinerarySystemPrompt(planner)
 
   const userMessage = buildItineraryUserMessage(
     destLabel,
