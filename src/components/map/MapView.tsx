@@ -54,7 +54,7 @@ const DEFAULT_FROM: [number, number] = [15, 45]
 const DEFAULT_TO: [number, number] = [100, 15]
 const FIT_PADDING = 80
 const FIT_DURATION = 1500
-const FIT_MAX_ZOOM = 8
+const FIT_MAX_ZOOM = 10
 const SAME_CITY_LAT_OFFSET = 0.01
 const ROUTE_SOURCE_ID = 'itinerary-routes'
 
@@ -96,11 +96,26 @@ function waitForMapLoad(instance: mapboxgl.Map): Promise<void> {
   })
 }
 
-function fitMapToItinerary(
+function fitMapToAllMarkers(
   instance: mapboxgl.Map,
-  bounds: mapboxgl.LngLatBounds
+  markers: mapboxgl.Marker[],
+  extraCoords: [number, number][] = []
 ): void {
-  if (bounds.isEmpty()) return
+  const bounds = new mapboxgl.LngLatBounds()
+  let hasPoint = false
+
+  for (const marker of markers) {
+    bounds.extend(marker.getLngLat())
+    hasPoint = true
+  }
+
+  for (const coord of extraCoords) {
+    bounds.extend(coord)
+    hasPoint = true
+  }
+
+  if (!hasPoint || bounds.isEmpty()) return
+
   instance.fitBounds(bounds, {
     padding: FIT_PADDING,
     duration: FIT_DURATION,
@@ -266,6 +281,12 @@ export default function MapView({
         transportMarkers.current = segments.map((seg) =>
           createTransportIconMarker(seg).addTo(map.current!)
         )
+
+        const routeCoords = segments.flatMap((seg) => seg.coordinates)
+        const markers: mapboxgl.Marker[] = []
+        if (departureMarker.current) markers.push(departureMarker.current)
+        markers.push(...transportMarkers.current)
+        fitMapToAllMarkers(map.current, markers, routeCoords)
       }
     })
 
@@ -295,8 +316,6 @@ export default function MapView({
 
     const fromCoords = airportCoords(fromCode) ?? DEFAULT_FROM
     const toCoords = airportCoords(toCode) ?? DEFAULT_TO
-    const bounds = new mapboxgl.LngLatBounds()
-    bounds.extend(toCoords)
 
     const geocodeAndMark = async () => {
       await waitForMapLoad(mapInstance)
@@ -360,7 +379,6 @@ export default function MapView({
           .addTo(map.current)
 
         dayMarkers.current.push(marker)
-        bounds.extend(markerCoords)
       }
 
       if (cancelled || !map.current) return
@@ -383,7 +401,14 @@ export default function MapView({
         createTransportIconMarker(seg).addTo(map.current!)
       )
 
-      fitMapToItinerary(map.current, bounds)
+      const allMarkers: mapboxgl.Marker[] = []
+      if (departureMarker.current) allMarkers.push(departureMarker.current)
+      allMarkers.push(...dayMarkers.current, ...transportMarkers.current)
+
+      const routeCoords = segments.flatMap((seg) => seg.coordinates)
+      const dayCoords = dayPoints.map((d) => d.coords)
+
+      fitMapToAllMarkers(map.current, allMarkers, [...routeCoords, ...dayCoords, toCoords])
     }
 
     void geocodeAndMark()
