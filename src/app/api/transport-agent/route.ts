@@ -1,7 +1,6 @@
 export const dynamic = 'force-dynamic'
 
 import { NextRequest } from 'next/server'
-import OpenAI from 'openai'
 import type {
   ChatCompletionMessageParam,
   ChatCompletionTool,
@@ -11,9 +10,8 @@ import {
   buildTransportContextAppendix,
   type TransportTripContext,
 } from '@/lib/transportAgentPrompt'
+import { assertOpenAIConfigured, getOpenAIClient } from '@/lib/openaiClient'
 import { searchWeb } from '@/lib/webSearch'
-
-const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY! })
 
 const WEB_SEARCH_TOOL: ChatCompletionTool = {
   type: 'function',
@@ -64,7 +62,7 @@ async function runWithTools(
   let rounds = 0
 
   while (rounds < MAX_TOOL_ROUNDS) {
-    const completion = await openai.chat.completions.create({
+    const completion = await getOpenAIClient().chat.completions.create({
       model,
       temperature: 0.55,
       max_tokens: 2200,
@@ -121,7 +119,9 @@ function emitTextStream(
 }
 
 export async function POST(req: NextRequest) {
-  if (!process.env.OPENAI_API_KEY) {
+  try {
+    assertOpenAIConfigured()
+  } catch {
     return new Response(JSON.stringify({ error: 'OPENAI_API_KEY manjka' }), {
       status: 503,
       headers: { 'Content-Type': 'application/json' },
@@ -178,7 +178,7 @@ export async function POST(req: NextRequest) {
           return
         }
 
-        const streamCompletion = await openai.chat.completions.create({
+        const streamCompletion = await getOpenAIClient().chat.completions.create({
           model,
           temperature: 0.55,
           max_tokens: 2200,

@@ -2,6 +2,7 @@ export const dynamic = 'force-dynamic'
 
 import { NextRequest } from 'next/server'
 import OpenAI from 'openai'
+import { assertOpenAIConfigured, getOpenAIClient } from '@/lib/openaiClient'
 import {
   assessItineraryCompleteness,
   buildItineraryContinuationMessage,
@@ -22,8 +23,6 @@ import { parseItineraryFromStreamBuffer, tryParsePartialItinerary } from '@/lib/
 import type { ItineraryDay } from '@/types/itinerary.types'
 import type { SelectedFlightForAI } from '@/types/selectedFlight.types'
 
-const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY! })
-
 /** Long trips need many structured day objects — keep output budget high. */
 const MAX_OUTPUT_TOKENS = 16_000
 const MAX_CONTINUATION_ROUNDS = 3
@@ -34,7 +33,7 @@ async function streamCompletionToBuffer(
   messages: ChatMessage[],
   onToken?: (fullBuffer: string) => void
 ): Promise<{ buffer: string; finishReason: string | null }> {
-  const completion = await openai.chat.completions.create({
+  const completion = await getOpenAIClient().chat.completions.create({
     model: process.env.OPENAI_MODEL ?? 'gpt-4o',
     stream: true,
     temperature: 0.5,
@@ -73,6 +72,14 @@ function parseBufferToDays(buffer: string): {
 }
 
 export async function POST(req: NextRequest) {
+  try {
+    assertOpenAIConfigured()
+  } catch {
+    return new Response('OPENAI_API_KEY environment variable is missing or empty', {
+      status: 503,
+    })
+  }
+
   const body = (await req.json()) as {
     destination: string
     travelNights: number
