@@ -77,6 +77,8 @@ export const ja: Messages = {
     titleGenerating: '作成中…',
     hotelsOnly: '宿泊のみ：{destination}',
     duration: '期間：{nights}',
+    incompletePlan:
+      'The plan is incomplete: only {generated} of {expected} days were generated. Try generating again or switch to a faster pace.',
     oneWay: '（片道）',
     addPlacePlaceholder: '場所や都市を追加...',
     manualHint: '上の検索バーに目的地と日程を入力し、調整して作成してください。',

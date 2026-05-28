@@ -26,6 +26,28 @@ body {
 ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 99px; }
 ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
 
+/* Horizontal hotel row — wider, always visible scrollbar */
+.route-stays-scroll {
+  scrollbar-width: auto;
+  scrollbar-color: #94a3b8 #e2e8f0;
+}
+.route-stays-scroll::-webkit-scrollbar {
+  height: 12px;
+}
+.route-stays-scroll::-webkit-scrollbar-track {
+  background: #e2e8f0;
+  border-radius: 99px;
+  margin: 0 4px;
+}
+.route-stays-scroll::-webkit-scrollbar-thumb {
+  background: #64748b;
+  border-radius: 99px;
+  border: 2px solid #e2e8f0;
+}
+.route-stays-scroll::-webkit-scrollbar-thumb:hover {
+  background: #475569;
+}
+
 /* Calendar range highlight */
 .rdp-day_selected { background: #0ea5e9 !important; color: white !important; }
 .rdp-day_range_middle { background: #e0f2fe !important; color: #0369a1 !important; }
@@ -96,6 +118,32 @@ body {
 .animated-map-minimal .mapboxgl-canvas {
   width: 100% !important;
   height: 100% !important;
+}
+
+/* AnimatedMap: marker fade-in */
+@keyframes map-marker-fade-in {
+  from {
+    opacity: 0;
+    transform: scale(0.65);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+.map-marker-enter {
+  animation: map-marker-fade-in 0.45s ease-out forwards;
+}
+
+/* AnimatedMap: premium vignette over dark map */
+.animated-map-minimal::after {
+  content: '';
+  pointer-events: none;
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  box-shadow: inset 0 0 80px rgba(0, 0, 0, 0.35);
+  z-index: 1;
 }
 
 /* AnimatedMap: brez Mapbox UI kontrol */

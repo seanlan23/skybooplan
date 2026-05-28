@@ -2,6 +2,7 @@
 
 import { useEffect, useRef } from 'react'
 import { formatCalendarDate } from '@/lib/calendarDate'
+import { isAbortError } from '@/lib/fetchUtils'
 import { cleanCityForBookingApi } from '@/lib/bookingLocation'
 import { useAccomStore } from '@/store/useAccomStore'
 import { useSearchStore } from '@/store/useSearchStore'
@@ -89,7 +90,7 @@ export function useAccommodations() {
       })
       .catch((err) => {
         if (requestId !== requestIdRef.current) return
-        if (err instanceof Error && err.name === 'AbortError') return
+        if (isAbortError(err)) return
         setResults([], { error: 'Povezava s strežnikom ni uspela.' })
       })
       .finally(() => {

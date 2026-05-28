@@ -73,6 +73,7 @@ export type Messages = {
     titleGenerating: string
     hotelsOnly: string
     duration: string
+    incompletePlan: string
     oneWay: string
     addPlacePlaceholder: string
     manualHint: string

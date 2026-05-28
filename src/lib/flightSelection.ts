@@ -81,6 +81,11 @@ export function offerToSelectedFlightForAI(
     destination: outbound.destination,
     originLabel: airportLabel(context.originAirport, outbound.origin),
     destinationLabel: hotelDestinationLabel(context.destinationAirport, outbound.destination),
+    originGeoQuery: hotelDestinationLabel(context.originAirport, outbound.origin),
+    destinationGeoQuery: hotelDestinationLabel(
+      context.destinationAirport,
+      outbound.destination
+    ),
     price: offer.price,
     currency: offer.currency,
     isRoundTrip: !!inbound,

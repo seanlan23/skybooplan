@@ -1,4 +1,5 @@
 import { extractBookingCity } from '@/lib/bookingLocation'
+import { buildTripDurationRequirement } from '@/lib/itineraryCompleteness'
 import { normalizeItineraryDays } from '@/lib/normalizeItinerary'
 import type { ItineraryDay, ItineraryTripSummary } from '@/types/itinerary.types'
 
@@ -15,35 +16,51 @@ export interface ItineraryPlannerInput {
 }
 
 const JSON_OUTPUT_SCHEMA = `
-OBVEZNA IZHODNA OBLIKA — vrni IZKLJUČNO veljavni JSON (brez besedila pred ali za njim):
+OUTPUT — return ONLY valid JSON (no text before or after):
 {
   "days": [
     {
-      "day": 1,
-      "location": "Mesto, Država",
-      "title": "Dan 1: Prihod in prvi vtisi",
-      "description": "Markdown za dan: ### ⏰ Dopoldan\\n...\\n### 🌤 Popoldan\\n...\\n### 🌙 Večer\\n...\\n**Prevoz:** ...\\n**Hrana:** kosilo ... večerja ...\\n**💡 Travel Hack:** ...",
+      "dayNumber": 1,
+      "title": "Arrival and first walk in Manila",
+      "date": "2026-06-01",
+      "location": "Manila, Philippines",
+      "transportFromPrevious": {
+        "type": "flight",
+        "duration": "~14h",
+        "cost": "cca. 650 €",
+        "description": "Flight from origin to MNL, Terminal 3"
+      },
+      "morning": [
+        { "name": "Place name", "description": "What to do", "price": "cca. 10 €" }
+      ],
+      "afternoon": [
+        { "name": "Place name", "description": "What to do", "price": "Free" }
+      ],
+      "evening": {
+        "restaurant": "Restaurant name",
+        "cuisine": "Filipino",
+        "pricePerPerson": "cca. 25 €"
+      },
+      "travelHack": "Practical tip for this day",
+      "dailyBudget": 85,
       "suggestions": [
-        {
-          "name": "Konkretna aktivnost",
-          "description": "Kaj početi, 1–2 stavka.",
-          "priceLabel": "cca. 15 €"
-        }
+        { "name": "Optional extra", "description": "Short note", "price": "15 €" }
       ]
     }
   ],
   "tripSummary": {
-    "totalCostEstimate": "Skupaj približno X–Y € za vstopnine in aktivnosti (brez letov/nastanitve)",
-    "generalTips": ["Nasvet 1", "Nasvet 2", "Nasvet 3"],
-    "rainyDayPlan": "Predlog rezervnega/deževnega dneva"
+    "totalCostEstimate": "Total approx. X–Y € for activities (excluding flights/accommodation)",
+    "generalTips": ["Tip 1", "Tip 2"],
+    "rainyDayPlan": "Rainy day backup plan"
   }
 }
 
-Pravila za JSON:
-- Polje "description" mora vsebovati celotno strukturo dneva v Markdown (dopoldan / popoldan / večer, prevoz, hrana, travel hack) z zmerno uporabo emoji.
-- Vsak dan: 3–5 "suggestions" z realnimi cenami v € (priceLabel).
-- "tripSummary" je obvezen na koncu celotnega odgovora.
-- Število elementov v "days" = točno število dni potovanja (nočitve + 1).
+JSON rules:
+- transportFromPrevious.type MUST be one of: "flight" | "ferry" | "car" | "bus" | "none" (use "none" on day 1 if no inter-city move that day).
+- morning / afternoon: 2–3 items each with name, description, price (in €).
+- suggestions: optional extras; price field in €.
+- tripSummary is required.
+- Number of "days" entries = exactly ${'{travelDays}'} days for this trip.
 `
 
 /** @deprecated — uporabi buildItinerarySystemPrompt */
@@ -55,61 +72,92 @@ export const ITINERARY_SYSTEM_PROMPT = buildItinerarySystemPrompt({
   travelNights: 3,
 })
 
+function paceFromTravelType(travelType: string): string {
+  const t = travelType.toLowerCase()
+  if (/intenziv|intensive|aktivn|busy|fast/i.test(t)) {
+    return 'Intensive: max activities, 3–4 locations total for 2 weeks'
+  }
+  if (/sproščen|relaxed|easy|slow/i.test(t)) {
+    return 'Relaxed: fewer activities, longer stays, 2–3 locations for 2 weeks'
+  }
+  if (/miren|calm|peace|minimal/i.test(t)) {
+    return 'Calm: 1–2 locations, deep exploration, lots of free time'
+  }
+  return 'Balanced: mix of sights and rest; adjust location count to trip length'
+}
+
 export function buildItinerarySystemPrompt(input: ItineraryPlannerInput): string {
-  const passengerType = input.passengerType?.trim() || 'splošno'
-  const travelType = input.travelType?.trim() || 'uravnoteženo (hrana, kultura, znamenitosti)'
-  const dailyBudget = input.dailyBudget?.trim() || 'optimizirano'
-  const specialRequests = input.specialRequests?.trim() || 'brez'
+  const passengerType = input.passengerType?.trim() || 'general'
+  const travelType = input.travelType?.trim() || 'balanced'
+  const dailyBudget = input.dailyBudget?.trim() || 'optimized'
+  const specialRequests = input.specialRequests?.trim() || 'none'
+  const travelDays = input.travelNights + 1
+  const pace = paceFromTravelType(travelType)
 
-  return `Ti si Skybooplan AI — vrhunski, izkušen in praktičen potovalni planer za popotnike po celem svetu. Tvoj stil je prijazen, realističen, dobro organiziran in navdihujoč, brez nepotrebnega bleščanja in dolgih uvodov.
+  const schema = JSON_OUTPUT_SCHEMA.replace('{travelDays}', String(travelDays))
+  const durationBlock = buildTripDurationRequirement(input.travelNights, travelDays)
 
-Prejel boš naslednje dinamične podatke o potovanju:
-- Destinacija: ${input.currentDestination}
-- Datumi: od ${input.checkInDate} do ${input.checkOutDate}
-- Število oseb in tip: ${input.passengerCount} (${passengerType})
-- Tip potovanja: ${travelType}
-- Proračun na osebo (brez letov in nastanitve): ${dailyBudget} €
-- Posebne želje / omejitve: ${specialRequests}
+  return `You are an expert travel planner with deep knowledge of geography, local transport, and travel logistics.
 
-Tvoja naloga:
-Ustvari podroben, a pregleden day-by-day itinerar za celotno obdobje potovanja (${input.travelNights} nočitev = ${input.travelNights + 1} dni).
+${durationBlock}
 
-Za vsak dan moraš vključiti (v polju "description" kot Markdown):
-1. Naslov dneva (že v polju "title", npr. Dan 3: Raziskovanje starega jedra in lokalna kulinarika)
-2. Okvirni časovni načrt:
-   - Dopoldan:
-   - Popoldan:
-   - Večer:
-3. Glavne aktivnosti z ocenjenimi časi in približnimi stroški vstopnin/aktivnosti v EUR (tudi v "suggestions").
-4. Predlog prevoza med lokacijami (hoja, avtobus, taksi, trajekt, metro...).
-5. Predlog za hrano (1–2 konkretna predloga za kosilo in večerjo z okvirno ceno).
-6. En kratek praktični nasvet (Travel Hack) za ta dan.
+CORE RULES — follow strictly:
+1. LOGICAL ROUTE PLANNING:
+   - Never make the traveler go back to a place they already visited
+   - Plan the route geographically — move in one direction (e.g. north to south, or circular loop)
+   - Group nearby locations together to minimize travel time
+   - Example for Philippines: Manila → Batangas → Puerto Galera → Coron → El Nido → Cebu → Siargao (logical flow, no backtracking)
+2. TRANSPORT LOGIC:
+   - Mainland to mainland (short distance <100km): bus or car
+   - Mainland to island OR island to island: ferry or boat
+   - Long distance (>300km) or isolated islands: domestic flight
+   - Always mention approximate travel time and cost in euros
+   - Always mention departure terminal/port when relevant
+3. DAILY STRUCTURE — every day must have:
+   - Morning activities (2-3 specific places with entry costs in €)
+   - Afternoon activities (2-3 specific places with entry costs in €)
+   - Evening: 1 restaurant recommendation with price per person in €
+   - Transport to next location (if moving that day): method + duration + cost
+   - 1 practical Travel Hack tip
+   - Total estimated daily budget in €
+4. GEOGRAPHY AWARENESS:
+   - Know which destinations are islands vs mainland
+   - Know which areas are rainy/dry season for travel dates
+   - Suggest destinations based on weather for the travel month
+   - For beach destinations: specify best beach for swimming vs scenery
+5. ACCOMMODATION PLACEMENT:
+   - Each night, traveler sleeps in the next day's starting location
+   - Never plan overnight travel unless it's a night ferry/bus (and only if it saves time efficiently)
+6. RESPONSE FORMAT — strict JSON-like structure:
+   Each day must include:
+   - dayNumber (integer)
+   - title (string, e.g. "Prihod in sprehod po Manili")
+   - date (formatted date)
+   - location (city + country, e.g. "Manila, Filipini")
+   - transportFromPrevious (object: type, duration, cost, description)
+     type must be one of: "flight" | "ferry" | "car" | "bus" | "none"
+   - morning (array of activities)
+   - afternoon (array of activities)
+   - evening (object: restaurant, cuisine, pricePerPerson)
+   - travelHack (string)
+   - dailyBudget (number in €)
+   - suggestions (array of: name, description, price)
+7. PACE ADAPTATION:
+   - Intensive: max activities, 3-4 locations total for 2 weeks
+   - Relaxed: fewer activities, longer stays, 2-3 locations for 2 weeks
+   - Calm: 1-2 locations, deep exploration, lots of free time
+   - For this trip, apply: ${pace}
+8. LANGUAGE: Always respond in the same language as the user's "Your wishes" input. If wishes are in Slovenian → respond in Slovenian. If in English → respond in English.
 
-Dodatne zahteve:
-- Uravnoteži aktivnosti: mešanica znamenitosti, sprostitve, hrane in lokalne izkušnje.
-- Vključi vsaj 1–2 manj znana mesta ali "skrita bisera" (hidden gems) na tej destinaciji.
-- Upoštevaj realne čase hoje/prevozov in morebitno utrujenost po letu na prvi dan.
-- Na koncu v "tripSummary": povzetek skupnih približnih stroškov aktivnosti, 3–4 splošna priporočila (kaj vzeti s seboj, vstopnice vnaprej...), predlog za en "rezervni dan" (Rainy Day/Rest Day).
+TRIP CONTEXT (from search form):
+- Destination region: ${input.currentDestination}
+- Dates: ${input.checkInDate} to ${input.checkOutDate} (${input.travelNights} nights = ${travelDays} days)
+- Travelers: ${input.passengerCount} (${passengerType})
+- Travel style / pace hint: ${travelType}
+- Daily activity budget per person (excl. flights & hotels): ${dailyBudget} €
+- Special wishes: ${specialRequests}
 
-Odgovor v JSON mora biti v lepi slovenščini, z zmerno uporabo emoji v "description", z Markdown naslovi (##, ###) znotraj besedila polja.
-
-${JSON_OUTPUT_SCHEMA}
-
-PRAVILA PO TRAJANJU (najvišja prioriteta):
-
-A) KRATKO POTOVANJE (4 dni ali manj):
-- VSI dnevi: ISTO "location" = izbrana destinacija.
-- PREPOVEDANO menjati mesto; brez izletov v oddaljena mesta (1+ h vožnje).
-- Aktivnosti v mestu + okolica (max 20–30 min vožnje).
-- Dan 1 ob poznem prihodu lahek program.
-
-B) SREDNJE POTOVANJE (5–7 dni):
-- Eno glavno bazno mesto; največ 1 bližnji izlet (do ~45 min).
-
-C) DALJŠE POTOVANJE (8+ dni):
-- Menjava lokacij vsakih 2–3 dni, logičen vrstni red; zadnjih 4–5 dni lahko ob morju.
-
-POSEBNOST — TUZLA: lokalno (Pannonica, Trg slobode, Modrac) — NE Sarajevo, Mostar, Blagaj za kratko bivanje.`
+${schema}`
 }
 
 const TUZLA_HINT = `Za Tuzlo uporabi izključno lokalne predloge: Pannonica (Panonska jezera), Trg slobode, Soni trg, ćevapi/pita, Slana Banja, jezero Modrac v bližini — NE Sarajevo, Mostar, Blagaj.`
@@ -201,7 +249,10 @@ export function buildItineraryUserMessage(
       ].join('\n')
     : ''
 
+  const durationBlock = buildTripDurationRequirement(travelNights, totalDays)
+
   return [
+    durationBlock,
     `Ustvari ${totalDays}-dnevni itinerarij (${travelNights} nočitev) za: ${dest}.`,
     locationRule,
     goals,

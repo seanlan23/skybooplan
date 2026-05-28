@@ -77,6 +77,8 @@ export const tr: Messages = {
     titleGenerating: 'Oluşturma devam ediyor…',
     hotelsOnly: 'Yalnızca konaklama: {destination}',
     duration: 'Süre: {nights}',
+    incompletePlan:
+      'The plan is incomplete: only {generated} of {expected} days were generated. Try generating again or switch to a faster pace.',
     oneWay: '(tek yön)',
     addPlacePlaceholder: 'Yer veya şehir ekle...',
     manualHint: 'Yukarıdaki arama çubuğuna varış ve tarihleri girin, özelleştirin ve oluşturun.',

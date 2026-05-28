@@ -77,6 +77,8 @@ export const hr: Messages = {
     titleGenerating: 'Generiranje u tijeku…',
     hotelsOnly: 'Samo smještaj: {destination}',
     duration: 'Trajanje: {nights}',
+    incompletePlan:
+      'The plan is incomplete: only {generated} of {expected} days were generated. Try generating again or switch to a faster pace.',
     oneWay: '(jednosmjerno)',
     addPlacePlaceholder: 'Dodaj mjesto ili grad...',
     manualHint: 'Unesite odredište i datume u traku za pretraživanje gore, prilagodite i generirajte.',

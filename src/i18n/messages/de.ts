@@ -77,6 +77,8 @@ export const de: Messages = {
     titleGenerating: 'Erstellung läuft…',
     hotelsOnly: 'Nur Unterkünfte: {destination}',
     duration: 'Dauer: {nights}',
+    incompletePlan:
+      'The plan is incomplete: only {generated} of {expected} days were generated. Try generating again or switch to a faster pace.',
     oneWay: '(einfache Strecke)',
     addPlacePlaceholder: 'Ort oder Stadt hinzufügen …',
     manualHint: 'Geben Sie Ziel und Daten in der Suchleiste oben ein, passen Sie an und erstellen Sie den Plan.',

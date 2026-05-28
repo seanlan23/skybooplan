@@ -1,6 +1,11 @@
 import { NextRequest } from 'next/server'
 import OpenAI from 'openai'
 import {
+  assessItineraryCompleteness,
+  buildItineraryContinuationMessage,
+  logIncompleteItineraryWarning,
+} from '@/lib/itineraryCompleteness'
+import {
   buildFlightPackage,
   buildHotelsOnlyPackage,
   buildItinerarySystemPrompt,
@@ -10,10 +15,60 @@ import {
   type ItineraryPlannerInput,
 } from '@/lib/itineraryPrompt'
 import { buildFlightContextForAI, formatFlightTimeForPrompt } from '@/lib/flightPromptContext'
-import { tryParsePartialItinerary } from '@/lib/tryParsePartialItinerary'
+import { mergeItineraryDaysByNumber } from '@/lib/normalizeItinerary'
+import { parseItineraryFromStreamBuffer, tryParsePartialItinerary } from '@/lib/tryParsePartialItinerary'
+import type { ItineraryDay } from '@/types/itinerary.types'
 import type { SelectedFlightForAI } from '@/types/selectedFlight.types'
 
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY! })
+
+/** Long trips need many structured day objects — keep output budget high. */
+const MAX_OUTPUT_TOKENS = 16_000
+const MAX_CONTINUATION_ROUNDS = 3
+
+type ChatMessage = OpenAI.Chat.Completions.ChatCompletionMessageParam
+
+async function streamCompletionToBuffer(
+  messages: ChatMessage[],
+  onToken?: (fullBuffer: string) => void
+): Promise<{ buffer: string; finishReason: string | null }> {
+  const completion = await openai.chat.completions.create({
+    model: process.env.OPENAI_MODEL ?? 'gpt-4o',
+    stream: true,
+    temperature: 0.5,
+    max_tokens: MAX_OUTPUT_TOKENS,
+    messages,
+  })
+
+  let buffer = ''
+  let finishReason: string | null = null
+
+  for await (const chunk of completion) {
+    const choice = chunk.choices[0]
+    const text = choice?.delta?.content ?? ''
+    if (text) {
+      buffer += text
+      onToken?.(buffer)
+    }
+    if (choice?.finish_reason) {
+      finishReason = choice.finish_reason
+    }
+  }
+
+  return { buffer, finishReason }
+}
+
+function parseBufferToDays(buffer: string): {
+  days: ItineraryDay[]
+  tripSummary: ReturnType<typeof parseItineraryResponse>['tripSummary']
+} {
+  const raw = parseItineraryFromStreamBuffer(buffer)
+  const { days, tripSummary } = parseItineraryResponse({
+    days: raw.days,
+    tripSummary: raw.tripSummary,
+  })
+  return { days, tripSummary }
+}
 
 export async function POST(req: NextRequest) {
   const body = (await req.json()) as {
@@ -79,64 +134,82 @@ export async function POST(req: NextRequest) {
 
   const stream = new ReadableStream({
     async start(controller) {
+      const enqueue = (payload: Record<string, unknown>) => {
+        controller.enqueue(encoder.encode(`data: ${JSON.stringify(payload)}\n\n`))
+      }
+
       try {
-        const completion = await openai.chat.completions.create({
-          model: process.env.OPENAI_MODEL ?? 'gpt-4o',
-          stream: true,
-          temperature: 0.5,
-          max_tokens: 5500,
-          messages: [
+        let messages: ChatMessage[] = [
+          { role: 'system', content: systemPrompt },
+          { role: 'user', content: userMessage },
+        ]
+
+        let mergedDays: ItineraryDay[] = []
+        let tripSummary: ReturnType<typeof parseItineraryResponse>['tripSummary'] = null
+        let lastPartialCount = 0
+
+        const emitPartialIfNeeded = (buffer: string) => {
+          const partialDays = tryParsePartialItinerary(buffer)
+          if (partialDays.length === 0) return
+          const combined = mergeItineraryDaysByNumber(mergedDays, partialDays)
+          if (combined.length > lastPartialCount) {
+            lastPartialCount = combined.length
+            enqueue({ partialItinerary: combined })
+          }
+        }
+
+        for (let round = 0; round <= MAX_CONTINUATION_ROUNDS; round++) {
+          const { buffer, finishReason } = await streamCompletionToBuffer(
+            messages,
+            emitPartialIfNeeded
+          )
+
+          const parsed = parseBufferToDays(buffer)
+          mergedDays = mergeItineraryDaysByNumber(mergedDays, parsed.days)
+          if (parsed.tripSummary) tripSummary = parsed.tripSummary
+
+          lastPartialCount = mergedDays.length
+          enqueue({ partialItinerary: mergedDays })
+
+          const completeness = assessItineraryCompleteness(mergedDays, travelNights)
+          const hitTokenLimit = finishReason === 'length'
+          const shouldContinue =
+            completeness.isIncomplete &&
+            mergedDays.length > 0 &&
+            round < MAX_CONTINUATION_ROUNDS &&
+            (hitTokenLimit || parsed.days.length > 0)
+
+          if (!shouldContinue) break
+
+          const lastDay = mergedDays[mergedDays.length - 1]?.day ?? 0
+          messages = [
             { role: 'system', content: systemPrompt },
             { role: 'user', content: userMessage },
-          ],
+            { role: 'assistant', content: buffer },
+            {
+              role: 'user',
+              content: buildItineraryContinuationMessage(lastDay, totalDays, destLabel),
+            },
+          ]
+        }
+
+        let itinerary = enforceShortTripItinerary(mergedDays, destLabel, totalDays)
+        const completeness = assessItineraryCompleteness(itinerary, travelNights)
+        logIncompleteItineraryWarning(completeness)
+
+        enqueue({
+          done: true,
+          itinerary,
+          tripSummary,
+          completeness: {
+            expectedDays: completeness.expectedDays,
+            generatedDays: completeness.generatedDays,
+            isIncomplete: completeness.isIncomplete,
+          },
         })
-
-        let buffer = ''
-        let lastPartialDayCount = 0
-        for await (const chunk of completion) {
-          const text = chunk.choices[0]?.delta?.content ?? ''
-          buffer += text
-          controller.enqueue(
-            encoder.encode(`data: ${JSON.stringify({ chunk: text })}\n\n`)
-          )
-
-          const partialDays = tryParsePartialItinerary(buffer)
-          if (partialDays.length > lastPartialDayCount) {
-            lastPartialDayCount = partialDays.length
-            controller.enqueue(
-              encoder.encode(
-                `data: ${JSON.stringify({ partialItinerary: partialDays })}\n\n`
-              )
-            )
-          }
-        }
-
-        try {
-          const jsonMatch = buffer.match(/\{[\s\S]*\}/)
-          if (jsonMatch) {
-            const parsed = JSON.parse(jsonMatch[0]) as {
-              days?: unknown[]
-              tripSummary?: unknown
-            }
-            let { days: itinerary, tripSummary } = parseItineraryResponse(parsed)
-            itinerary = enforceShortTripItinerary(itinerary, destLabel, totalDays)
-            controller.enqueue(
-              encoder.encode(
-                `data: ${JSON.stringify({ done: true, itinerary, tripSummary })}\n\n`
-              )
-            )
-          }
-        } catch {
-          controller.enqueue(
-            encoder.encode(`data: ${JSON.stringify({ error: 'Parse error' })}\n\n`)
-          )
-        }
-
-        controller.close()
       } catch (err) {
-        controller.enqueue(
-          encoder.encode(`data: ${JSON.stringify({ error: String(err) })}\n\n`)
-        )
+        enqueue({ error: String(err) })
+      } finally {
         controller.close()
       }
     },

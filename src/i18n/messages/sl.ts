@@ -78,6 +78,8 @@ export const sl: Messages = {
     titleGenerating: 'Generiranje poteka…',
     hotelsOnly: 'Samo namestitve: {destination}',
     duration: 'Trajanje: {nights}',
+    incompletePlan:
+      'Načrt je nepopoln: ustvarjenih je le {generated} od {expected} dni. Poskusite znova generirati ali izberite hitrejši tempo.',
     oneWay: '(enosmerno)',
     addPlacePlaceholder: 'Dodaj kraj ali mesto...',
     manualHint: 'V iskalnik zgoraj vnesi destinacijo in datume, nato prilagodi načrt in klikni generiraj.',

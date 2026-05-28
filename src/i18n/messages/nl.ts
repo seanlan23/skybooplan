@@ -77,6 +77,8 @@ export const nl: Messages = {
     titleGenerating: 'Genereren bezig…',
     hotelsOnly: 'Alleen verblijf: {destination}',
     duration: 'Duur: {nights}',
+    incompletePlan:
+      'The plan is incomplete: only {generated} of {expected} days were generated. Try generating again or switch to a faster pace.',
     oneWay: '(enkele reis)',
     addPlacePlaceholder: 'Plaats of stad toevoegen...',
     manualHint: 'Voer bestemming en data in de zoekbalk hierboven in, pas aan en genereer.',

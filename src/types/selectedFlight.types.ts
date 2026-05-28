@@ -27,6 +27,9 @@ export interface SelectedFlightForAI {
   returnArrivalAt?: string
   originLabel: string
   destinationLabel: string
+  /** Mesto + država za Mapbox geokodiranje (ne IATA). */
+  originGeoQuery?: string
+  destinationGeoQuery?: string
   travelNights: number
   /** Časovna premica odhoda (od LJU do končne destinacije) */
   timeline: FlightTimelinePoint[]

@@ -11,9 +11,15 @@ export interface HotelsOnlyContext {
   checkOut: Date
 }
 
+export interface ItineraryCompletenessWarning {
+  expectedDays: number
+  generatedDays: number
+}
+
 interface PlannerState {
   itinerary: ItineraryDay[]
   tripSummary: ItineraryTripSummary | null
+  itineraryCompleteness: ItineraryCompletenessWarning | null
   isGenerating: boolean
   generatingProgress: number
   activeLocation: string | null
@@ -29,6 +35,7 @@ interface PlannerState {
   // Actions
   setItinerary: (days: ItineraryDay[]) => void
   setTripSummary: (summary: ItineraryTripSummary | null) => void
+  setItineraryCompleteness: (warning: ItineraryCompletenessWarning | null) => void
   setIsGenerating: (v: boolean) => void
   setProgress: (v: number) => void
   setActiveLocation: (loc: string | null) => void
@@ -47,6 +54,7 @@ interface PlannerState {
 export const usePlannerStore = create<PlannerState>((set) => ({
   itinerary: [],
   tripSummary: null,
+  itineraryCompleteness: null,
   isGenerating: false,
   generatingProgress: 0,
   activeLocation: null,
@@ -60,6 +68,7 @@ export const usePlannerStore = create<PlannerState>((set) => ({
 
   setItinerary: (days) => set({ itinerary: days }),
   setTripSummary: (tripSummary) => set({ tripSummary }),
+  setItineraryCompleteness: (itineraryCompleteness) => set({ itineraryCompleteness }),
   setIsGenerating: (v) => set({ isGenerating: v }),
   setProgress: (v) => set({ generatingProgress: v }),
   setActiveLocation: (loc) => set({ activeLocation: loc }),
@@ -88,6 +97,7 @@ export const usePlannerStore = create<PlannerState>((set) => ({
     set({
       itinerary: [],
       tripSummary: null,
+      itineraryCompleteness: null,
       isGenerating: false,
       generatingProgress: 0,
       activeLocation: null,

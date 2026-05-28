@@ -2,16 +2,12 @@
 
 import { useMemo, useState } from 'react'
 import { useSelectedFlightStore } from '@/store/useSelectedFlightStore'
-import { locationsFromSelectedFlight } from '@/lib/mapFlightLocations'
+import { usePlannerStore } from '@/store/usePlannerStore'
 import { ArrowLeft, FileDown, FileText } from 'lucide-react'
 import AIPlanner from '@/components/planner/AIPlanner'
 import HotelAggregator from '@/components/accommodations/HotelAggregator'
-import { RecommendedRouteStays } from '@/components/accommodations/RecommendedRouteStays'
 import { FlightResults } from '@/components/search/FlightResults'
-import {
-  AnimatedMapDynamic,
-  DEMO_THAILAND_LOCATIONS,
-} from '@/components/map/AnimatedMapDynamic'
+import { MapViewDynamic } from '@/components/map/MapViewDynamic'
 import { useFlightSearch } from '@/hooks/useFlightSearch'
 import { useSkyscannerRedirect } from '@/hooks/useSkyscannerRedirect'
 import { useFlightResultsColumnHeight } from '@/hooks/useFlightResultsColumnHeight'
@@ -28,14 +24,17 @@ export function FlightsPlanGridSection() {
   const [showMap, setShowMap] = useState(false)
   const [mapInstanceKey, setMapInstanceKey] = useState(0)
   const selectedFlight = useSelectedFlightStore((s) => s.selectedFlight)
+  const itinerary = usePlannerStore((s) => s.itinerary)
 
-  const mapLocations = useMemo(() => {
-    if (selectedFlight) {
-      const fromFlight = locationsFromSelectedFlight(selectedFlight)
-      if (fromFlight.length >= 2) return fromFlight
-    }
-    return DEMO_THAILAND_LOCATIONS
-  }, [selectedFlight])
+  const mapItineraryDays = useMemo(
+    () =>
+      itinerary.map((d) => ({
+        dayNumber: d.day,
+        location: d.location,
+        transportFromPrevious: d.transportFromPrevious,
+      })),
+    [itinerary]
+  )
 
   const remeasureKey = `${offers.length}-${isSearching}-${hasSearched}`
   const { ref: cardsHeightRef, height: plannerScrollHeight } =
@@ -91,7 +90,6 @@ export function FlightsPlanGridSection() {
             >
               <div className="p-3 min-h-0 flex-1 overflow-y-auto overflow-x-hidden overscroll-y-contain">
                 <AIPlanner title="" compact onGenerirajNacrt={handleGenerirajNacrt} />
-                {showMap ? <RecommendedRouteStays /> : null}
               </div>
               {showMap ? <PlannerExportActions /> : null}
             </div>
@@ -106,7 +104,6 @@ export function FlightsPlanGridSection() {
                 style={{ maxHeight: showMap ? 'min(65vh, 640px)' : 'min(70vh, 520px)' }}
               >
                 <AIPlanner title="" compact onGenerirajNacrt={handleGenerirajNacrt} />
-                {showMap ? <RecommendedRouteStays /> : null}
               </div>
               {showMap ? <PlannerExportActions /> : null}
             </div>
@@ -146,11 +143,12 @@ export function FlightsPlanGridSection() {
                   {t('planner.backToFlights')}
                 </button>
 
-                <AnimatedMapDynamic
+                <MapViewDynamic
                   key={mapInstanceKey}
-                  locations={mapLocations}
-                  selectedFlight={selectedFlight}
-                  className="flex-1 w-full min-h-[320px] lg:min-h-0 h-[min(52vh,480px)] lg:h-full rounded-xl border border-slate-200 shadow-md"
+                  fromCode={selectedFlight?.origin ?? ''}
+                  toCode={selectedFlight?.destination ?? ''}
+                  itineraryDays={mapItineraryDays}
+                  className="flex-1 w-full min-h-[320px] lg:min-h-0 h-[min(52vh,480px)] lg:h-full rounded-xl border border-slate-200 shadow-md overflow-hidden"
                 />
               </div>
             ) : (

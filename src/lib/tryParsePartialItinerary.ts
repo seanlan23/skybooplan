@@ -38,6 +38,39 @@ function extractCompleteDayObjects(buffer: string): unknown[] {
   return objects
 }
 
+/** Parse final stream buffer — prefers complete day objects over fragile full JSON. */
+export function parseItineraryFromStreamBuffer(buffer: string): {
+  days: unknown[]
+  tripSummary?: unknown
+} {
+  const dayObjects = extractCompleteDayObjects(buffer)
+  if (dayObjects.length > 0) {
+    const start = buffer.indexOf('{')
+    if (start >= 0) {
+      try {
+        const parsed = JSON.parse(buffer.slice(start)) as { tripSummary?: unknown }
+        return { days: dayObjects, tripSummary: parsed.tripSummary }
+      } catch {
+        // truncated tail — day objects are still valid
+      }
+    }
+    return { days: dayObjects }
+  }
+
+  const start = buffer.indexOf('{')
+  if (start < 0) return { days: [] }
+
+  try {
+    const parsed = JSON.parse(buffer.slice(start)) as {
+      days?: unknown[]
+      tripSummary?: unknown
+    }
+    return { days: parsed.days ?? [], tripSummary: parsed.tripSummary }
+  } catch {
+    return { days: [] }
+  }
+}
+
 /** Poskusi iznesti delni JSON itinerar iz OpenAI stream bufferja. */
 export function tryParsePartialItinerary(buffer: string): ItineraryDay[] {
   const fromObjects = extractCompleteDayObjects(buffer)

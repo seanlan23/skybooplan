@@ -23,15 +23,26 @@ import { useAccomStore } from '@/store/useAccomStore'
 import { usePlannerStore } from '@/store/usePlannerStore'
 import { useSearchStore } from '@/store/useSearchStore'
 import { useSelectedFlightStore } from '@/store/useSelectedFlightStore'
-import type { HotelsOnlyContext } from '@/store/usePlannerStore'
+import type {
+  HotelsOnlyContext,
+  ItineraryCompletenessWarning,
+} from '@/store/usePlannerStore'
 import { sanitizeHotelLocation } from '@/lib/bookingLocation'
+import {
+  assessItineraryCompleteness,
+  logIncompleteItineraryWarning,
+} from '@/lib/itineraryCompleteness'
 import { normalizeItineraryDays, syncItineraryDayLabels } from '@/lib/normalizeItinerary'
 import { normalizeTripSummary } from '@/lib/itineraryPrompt'
 import type { ItineraryDay, ItineraryTripSummary } from '@/types/itinerary.types'
-import { useCinematicMapStore } from '@/store/useCinematicMapStore'
+import { useItineraryHotelsStore } from '@/store/useItineraryHotelsStore'
 
 type StreamCallbacks = {
-  onDone: (days: ItineraryDay[], tripSummary: ItineraryTripSummary | null) => void
+  onDone: (
+    days: ItineraryDay[],
+    tripSummary: ItineraryTripSummary | null,
+    completeness: ItineraryCompletenessWarning | null
+  ) => void
   onPartial?: (days: ItineraryDay[]) => void
 }
 
@@ -45,39 +56,86 @@ async function consumeItineraryStream(
 
   const reader = res.body.getReader()
   const decoder = new TextDecoder()
+  let sseBuffer = ''
   let progress = 5
   const progressInterval = setInterval(() => {
     progress = Math.min(progress + 3, 90)
     setProgress(progress)
   }, 400)
 
+  const processSseLine = (line: string) => {
+    if (!line.startsWith('data: ')) return
+    try {
+      const json = JSON.parse(line.slice(6)) as {
+        partialItinerary?: unknown[]
+        done?: boolean
+        itinerary?: unknown[]
+        tripSummary?: unknown
+        completeness?: {
+          expectedDays: number
+          generatedDays: number
+          isIncomplete: boolean
+        }
+        error?: string
+      }
+
+      if (json.error) {
+        throw new Error(json.error)
+      }
+
+      if (json.partialItinerary?.length) {
+        const partial = normalizeItineraryDays(json.partialItinerary)
+        onPartial?.(partial)
+      }
+
+      if (json.done && json.itinerary) {
+        clearInterval(progressInterval)
+        setProgress(100)
+        const days = normalizeItineraryDays(json.itinerary)
+        const tripSummary = json.tripSummary
+          ? normalizeTripSummary(json.tripSummary)
+          : null
+
+        let completenessWarning: ItineraryCompletenessWarning | null = null
+        if (json.completeness?.isIncomplete) {
+          completenessWarning = {
+            expectedDays: json.completeness.expectedDays,
+            generatedDays: json.completeness.generatedDays,
+          }
+          logIncompleteItineraryWarning({
+            expectedDays: json.completeness.expectedDays,
+            generatedDays: json.completeness.generatedDays,
+            isComplete: false,
+            isIncomplete: true,
+          })
+        }
+
+        onDone(days, tripSummary, completenessWarning)
+      }
+    } catch (err) {
+      if (err instanceof Error && err.message !== 'Unexpected end of JSON input') {
+        throw err
+      }
+    }
+  }
+
   while (true) {
     const { done, value } = await reader.read()
     if (done) break
 
-    const text = decoder.decode(value)
-    for (const line of text.split('\n')) {
-      if (!line.startsWith('data: ')) continue
-      try {
-        const json = JSON.parse(line.slice(6))
-        if (json.partialItinerary) {
-          const partial = normalizeItineraryDays(json.partialItinerary as unknown[])
-          onPartial?.(partial)
-        }
-        if (json.done && json.itinerary) {
-          clearInterval(progressInterval)
-          setProgress(100)
-          const days = normalizeItineraryDays(json.itinerary as unknown[])
-          const tripSummary = json.tripSummary
-            ? normalizeTripSummary(json.tripSummary)
-            : null
-          onDone(days, tripSummary)
-        }
-      } catch {
-        // delni chunk
-      }
+    sseBuffer += decoder.decode(value, { stream: true })
+    const lines = sseBuffer.split('\n')
+    sseBuffer = lines.pop() ?? ''
+
+    for (const line of lines) {
+      if (line.trim()) processSseLine(line)
     }
   }
+
+  if (sseBuffer.trim()) {
+    processSseLine(sseBuffer)
+  }
+
   clearInterval(progressInterval)
   setProgress(100)
 }
@@ -99,6 +157,7 @@ export function useAIItinerary() {
   const {
     setItinerary,
     setTripSummary,
+    setItineraryCompleteness,
     setIsGenerating,
     setProgress,
     customLocations,
@@ -151,7 +210,8 @@ export function useAIItinerary() {
     setProgress(0)
     setItinerary([])
     setTripSummary(null)
-    useCinematicMapStore.getState().startCinematic()
+    setItineraryCompleteness(null)
+    useItineraryHotelsStore.getState().clearAll()
 
     const alignDays = (raw: ItineraryDay[]) =>
       syncItineraryDayLabels(
@@ -182,14 +242,11 @@ export function useAIItinerary() {
           onPartial: (raw) => {
             const aligned = alignDays(raw)
             setItinerary(aligned)
-            useCinematicMapStore.getState().setStreamingDays(aligned)
           },
           onDone: (raw, tripSummary) => {
           const aligned = alignDays(raw)
           setItinerary(aligned)
           setTripSummary(tripSummary)
-          useCinematicMapStore.getState().setStreamingDays(aligned)
-          useCinematicMapStore.getState().setPhase('complete')
           useAccomStore.getState().clearUserPickedHotel()
 
           const anchor = startOfDay(parseISO(selectedFlight.outboundArrivalAt))
@@ -243,6 +300,8 @@ export function useAIItinerary() {
     setProgress(0)
     setItinerary([])
     setTripSummary(null)
+    setItineraryCompleteness(null)
+    useItineraryHotelsStore.getState().clearAll()
 
     try {
       const res = await fetch('/api/ai/itinerary', {
@@ -325,6 +384,8 @@ export function useAIItinerary() {
     setProgress(0)
     setItinerary([])
     setTripSummary(null)
+    setItineraryCompleteness(null)
+    useItineraryHotelsStore.getState().clearAll()
 
     try {
       const body: Record<string, unknown> = {
@@ -347,12 +408,13 @@ export function useAIItinerary() {
       await consumeItineraryStream(
         res,
         {
-          onDone: (raw, tripSummary) => {
+          onDone: (raw, tripSummary, completeness) => {
           const aligned = syncItineraryDayLabels(
             reanchorItineraryToArrival(raw, arrivalAt, destinationLabel)
           )
           setItinerary(aligned)
           setTripSummary(tripSummary)
+          setItineraryCompleteness(completeness)
           useAccomStore.getState().clearUserPickedHotel()
 
           if (selectedFlight?.outboundArrivalAt) {

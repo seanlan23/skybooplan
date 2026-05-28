@@ -77,6 +77,8 @@ export const ru: Messages = {
     titleGenerating: 'Идёт создание…',
     hotelsOnly: 'Только проживание: {destination}',
     duration: 'Длительность: {nights}',
+    incompletePlan:
+      'The plan is incomplete: only {generated} of {expected} days were generated. Try generating again or switch to a faster pace.',
     oneWay: '(в одну сторону)',
     addPlacePlaceholder: 'Добавить место или город...',
     manualHint: 'Введите направление и даты в строке поиска выше, настройте и создайте.',

@@ -7,6 +7,7 @@ import { useState } from 'react'
 import { usePlannerStore } from '@/store/usePlannerStore'
 import { useSearchStore } from '@/store/useSearchStore'
 import { useAIItinerary } from '@/hooks/useAIItinerary'
+import { useItineraryCityHotels } from '@/hooks/useItineraryCityHotels'
 import { hasPlannerDestination } from '@/lib/itineraryPlannerContext'
 import { DayCard } from './DayCard'
 import { ItineraryTripSummaryCard } from './ItineraryTripSummaryCard'
@@ -39,6 +40,7 @@ export default function AIPlanner({
   const {
     itinerary,
     tripSummary,
+    itineraryCompleteness,
     isGenerating,
     generatingProgress,
     mode,
@@ -57,6 +59,7 @@ export default function AIPlanner({
   const searchDestination = useSearchStore((s) => s.destination)
   const hotelDestination = useSearchStore((s) => s.hotelDestination)
   const { generate, generateHotelsOnly, generateManual } = useAIItinerary()
+  useItineraryCityHotels()
   const [customInput, setCustomInput] = useState('')
   const [aiPrefsHint, setAiPrefsHint] = useState<string | null>(null)
 
@@ -401,6 +404,18 @@ export default function AIPlanner({
           {Array.from({ length: 4 }).map((_, i) => (
             <SkeletonDayCard key={i} />
           ))}
+        </div>
+      )}
+
+      {itineraryCompleteness && itinerary.length > 0 && (
+        <div
+          role="status"
+          className="rounded-lg border border-amber-300/80 bg-amber-50 px-3 py-2 text-sm text-amber-950"
+        >
+          {t('planner.incompletePlan', {
+            generated: itineraryCompleteness.generatedDays,
+            expected: itineraryCompleteness.expectedDays,
+          })}
         </div>
       )}
 

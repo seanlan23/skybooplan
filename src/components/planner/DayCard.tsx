@@ -11,7 +11,9 @@ import { useAccomStore } from '@/store/useAccomStore'
 import { useSearchStore } from '@/store/useSearchStore'
 import { useSelectedFlightStore } from '@/store/useSelectedFlightStore'
 import { cn } from '@/lib/utils'
+import { isFirstDayForCity } from '@/lib/itineraryCitySegments'
 import type { ItineraryDay } from '@/types/itinerary.types'
+import { DayCardHotels } from './DayCardHotels'
 import { ItineraryMarkdown } from './ItineraryMarkdown'
 
 interface DayCardProps {
@@ -27,6 +29,19 @@ export function DayCard({ day, index }: DayCardProps) {
 
   const isActive = activeLocation === day.location
   const suggestions = day.suggestions ?? []
+  const showHotels = isFirstDayForCity(day, itinerary)
+
+  const dateLabel =
+    selectedFlight || departureDate
+      ? format(
+          day.estimatedDate ??
+            (selectedFlight
+              ? calendarDateForDay(selectedFlight.outboundArrivalAt, day.day)
+              : departureDate!),
+          'EEEE, d. MMM',
+          { locale: sl }
+        )
+      : null
 
   function handleLocationClick() {
     setActiveLocation(day.location)
@@ -54,80 +69,94 @@ export function DayCard({ day, index }: DayCardProps) {
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: index * 0.08 }}
       className={cn(
-        'bg-white rounded-2xl border p-4 md:p-5 transition-all duration-200',
+        'overflow-hidden rounded-2xl border bg-white transition-all duration-200',
+        'shadow-[0_4px_18px_rgba(15,23,42,0.07)]',
         isActive
-          ? 'border-sky-300 shadow-card-hover ring-2 ring-sky-100'
-          : 'border-slate-100 shadow-card hover:border-slate-200'
+          ? 'border-sky-300 shadow-[0_8px_28px_rgba(14,165,233,0.18)] ring-2 ring-sky-100'
+          : 'border-slate-100 hover:border-slate-200 hover:shadow-[0_6px_22px_rgba(15,23,42,0.1)]'
       )}
     >
-      <div className="flex items-start gap-3 mb-3">
-        <div
-          className={cn(
-            'w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold shrink-0',
-            isActive ? /* BACKUP: 'bg-sky-500 text-white' */ 'bg-sky-600 text-white' : 'bg-sky-50 text-sky-600'
-          )}
-        >
-          {day.day}
-        </div>
-        <div className="flex-1 min-w-0">
-          <p className="font-semibold text-slate-900 text-sm leading-tight">{day.title}</p>
-          {(selectedFlight || departureDate) && (
-            <p className="text-xs text-slate-400 mt-0.5">
-              {format(
-                day.estimatedDate ??
-                  (selectedFlight
-                    ? calendarDateForDay(selectedFlight.outboundArrivalAt, day.day)
-                    : departureDate!),
-                'EEEE, d. MMM',
-                { locale: sl }
-              )}
-            </p>
-          )}
-        </div>
-      </div>
-
-      <button
-        type="button"
-        onClick={handleLocationClick}
+      {/* Glava dneva */}
+      <div
         className={cn(
-          'inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium mb-3 transition-all duration-200',
-          isActive
-            ? /* BACKUP: 'bg-sky-500 text-white' */ 'bg-sky-600 text-white hover:bg-sky-700'
-            : 'bg-sky-50 text-sky-700 hover:bg-sky-100 border border-sky-200'
+          'px-4 py-4 md:px-5 md:py-4',
+          'bg-gradient-to-br from-sky-50/95 via-slate-50/90 to-slate-100/80',
+          isActive && 'from-sky-100/90 via-sky-50/80 to-slate-50/90'
         )}
       >
-        <MapPin className="w-3 h-3" />
-        {day.location}
-      </button>
-
-      <div className="mb-4">
-        <ItineraryMarkdown text={day.description} />
+        <div className="flex items-start gap-3">
+          <div
+            className={cn(
+              'flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-sm font-bold',
+              isActive ? 'bg-sky-600 text-white shadow-sm' : 'bg-white text-sky-600 shadow-sm ring-1 ring-sky-100'
+            )}
+          >
+            {day.day}
+          </div>
+          <div className="min-w-0 flex-1">
+            <h3 className="text-base font-bold leading-snug text-slate-900 md:text-[1.0625rem]">
+              {day.title}
+            </h3>
+            <div className="mt-2 flex flex-wrap items-center gap-2">
+              {dateLabel ? (
+                <span className="text-xs font-medium text-slate-500">{dateLabel}</span>
+              ) : null}
+              <button
+                type="button"
+                onClick={handleLocationClick}
+                className={cn(
+                  'inline-flex items-center gap-1.5 rounded-full px-3.5 py-1.5 text-xs font-medium',
+                  'shadow-sm transition-all duration-200',
+                  isActive
+                    ? 'bg-sky-600 text-white hover:bg-sky-700 shadow-md'
+                    : 'border border-sky-200 bg-sky-50 text-sky-700 hover:bg-sky-100 hover:shadow-md'
+                )}
+              >
+                <MapPin className="h-3 w-3 shrink-0" />
+                {day.location}
+              </button>
+            </div>
+          </div>
+        </div>
       </div>
 
-      {suggestions.length > 0 && (
-        <div className="border-t border-slate-100 pt-3 space-y-2">
-          <p className="text-[10px] font-bold uppercase tracking-wide text-slate-400 mb-1">
-            Predlogi za dan
-          </p>
-          {suggestions.map((s, i) => (
-            <div
-              key={`${s.name}-${i}`}
-              className="rounded-xl bg-slate-50/90 border border-slate-100 px-3 py-2.5"
-            >
-              <div className="flex items-start justify-between gap-2">
-                <p className="text-sm font-semibold text-slate-800 leading-snug">{s.name}</p>
-                <span className="shrink-0 inline-flex items-center gap-0.5 text-xs font-semibold text-leaf-700 bg-leaf-50 border border-leaf-100 rounded-md px-1.5 py-0.5">
-                  <Euro className="w-3 h-3" />
-                  {s.priceLabel}
-                </span>
-              </div>
-              {s.description ? (
-                <p className="text-xs text-slate-500 mt-1.5 leading-relaxed">{s.description}</p>
-              ) : null}
+      {/* Vsebina */}
+      <div className="space-y-5 px-4 py-5 leading-[1.6] md:px-5">
+        <ItineraryMarkdown text={day.description} />
+
+        {showHotels ? <DayCardHotels day={day} /> : null}
+
+        {suggestions.length > 0 ? (
+          <div className="space-y-3 border-t border-slate-100 pt-5">
+            <p className="text-[10px] font-bold uppercase tracking-wide text-slate-400">
+              Predlogi za dan
+            </p>
+            <div className="space-y-2.5">
+              {suggestions.map((s, i) => (
+                <div
+                  key={`${s.name}-${i}`}
+                  className={cn(
+                    'rounded-xl border border-slate-100 bg-slate-50/90 px-3.5 py-3',
+                    'transition-all duration-200',
+                    'hover:-translate-y-0.5 hover:border-slate-200 hover:bg-white hover:shadow-md'
+                  )}
+                >
+                  <div className="flex items-start justify-between gap-2">
+                    <p className="text-sm font-semibold leading-snug text-slate-800">{s.name}</p>
+                    <span className="inline-flex shrink-0 items-center gap-0.5 rounded-full border border-leaf-200 bg-leaf-50 px-2.5 py-1 text-xs font-bold text-leaf-700 shadow-sm">
+                      <Euro className="h-3 w-3" />
+                      {s.priceLabel}
+                    </span>
+                  </div>
+                  {s.description ? (
+                    <p className="mt-2 text-xs leading-[1.6] text-slate-500">{s.description}</p>
+                  ) : null}
+                </div>
+              ))}
             </div>
-          ))}
-        </div>
-      )}
+          </div>
+        ) : null}
+      </div>
     </motion.div>
   )
 }

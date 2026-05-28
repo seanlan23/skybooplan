@@ -77,6 +77,8 @@ export const ar: Messages = {
     titleGenerating: 'جارٍ الإنشاء…',
     hotelsOnly: 'إقامة فقط: {destination}',
     duration: 'المدة: {nights}',
+    incompletePlan:
+      'The plan is incomplete: only {generated} of {expected} days were generated. Try generating again or switch to a faster pace.',
     oneWay: '(ذهاب فقط)',
     addPlacePlaceholder: 'أضف مكاناً أو مدينة...',
     manualHint: 'أدخل الوجهة والتواريخ في شريط البحث أعلاه، ثم خصّص وأنشئ.',

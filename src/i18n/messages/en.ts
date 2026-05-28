@@ -77,6 +77,8 @@ export const en: Messages = {
     titleGenerating: 'Generation in progress…',
     hotelsOnly: 'Stays only: {destination}',
     duration: 'Duration: {nights}',
+    incompletePlan:
+      'The plan is incomplete: only {generated} of {expected} days were generated. Try generating again or switch to a faster pace.',
     oneWay: '(one way)',
     addPlacePlaceholder: 'Add a place or city...',
     manualHint: 'Enter destination and dates in the search bar above, then customize and generate.',

@@ -77,6 +77,8 @@ export const zh: Messages = {
     titleGenerating: '正在生成…',
     hotelsOnly: '仅住宿：{destination}',
     duration: '时长：{nights}',
+    incompletePlan:
+      'The plan is incomplete: only {generated} of {expected} days were generated. Try generating again or switch to a faster pace.',
     oneWay: '（单程）',
     addPlacePlaceholder: '添加地点或城市...',
     manualHint: '在上方搜索栏输入目的地和日期，自定义后生成。',

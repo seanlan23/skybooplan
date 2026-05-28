@@ -15,7 +15,12 @@ import {
 } from '@/lib/bookingLocation'
 import { buildBookingUrl, defaultChildrenAges } from '@/lib/affiliateLinks'
 import { normalizeBookingGuestRating } from '@/lib/hotelRating'
+import { parseDistanceKmFromText, inferLocationAreaTag } from '@/lib/hotelLocationArea'
+import { ROUTE_STAY_MIN_RATING, recommendedStayScore } from '@/lib/routeStayHotels'
 import type { Accommodation, AccomSource } from '@/types/accommodation.types'
+
+const ROUTE_SEARCH_MAX_HOTELS = 36
+const GALLERY_FETCH_LIMIT = 14
 
 /** RapidAPI DataCrawler — Booking.com (nastavi v .env.local) */
 const RAPIDAPI_KEY = process.env.RAPIDAPI_KEY
@@ -256,6 +261,67 @@ function mapReviewScore(raw: unknown): number {
   return normalizeBookingGuestRating(raw)
 }
 
+function extractDistanceFromCenterKm(
+  label: string,
+  hotel: Record<string, unknown>,
+  property: Record<string, unknown>
+): number | undefined {
+  const fromLabel = parseDistanceKmFromText(label)
+  if (fromLabel != null) return fromLabel
+
+  const raw =
+    hotel.distance_to_downtown ??
+    hotel.distance ??
+    property.distance_to_downtown ??
+    property.distance
+
+  if (typeof raw === 'number' && raw > 0) return raw
+  if (typeof raw === 'string') {
+    const parsed = parseDistanceKmFromText(raw)
+    if (parsed != null) return parsed
+  }
+  return undefined
+}
+
+async function fetchSearchHotelsPage(
+  dest: { destId: string; searchType: string },
+  params: {
+    checkIn: Date
+    checkOut: Date
+    adults: number
+    children: number
+    rooms: number
+  },
+  pageNumber: number
+): Promise<Record<string, unknown>[]> {
+  const searchParams = new URLSearchParams({
+    dest_id: dest.destId,
+    search_type: dest.searchType,
+    arrival_date: formatCalendarDate(params.checkIn),
+    departure_date: formatCalendarDate(params.checkOut),
+    adults: String(params.adults),
+    room_qty: String(params.rooms),
+    page_number: String(pageNumber),
+    units: 'metric',
+    temperature_unit: 'c',
+    languagecode: BOOKING_LANGUAGE,
+    currency_code: 'EUR',
+  })
+  const childrenAge = defaultChildrenAges(params.children)
+  if (childrenAge) searchParams.set('children_age', childrenAge)
+
+  const hotelsRes = await fetch(
+    `https://${BOOKING_HOST}/api/v1/hotels/searchHotels?${searchParams}`,
+    { headers: bookingHeaders(), cache: 'no-store' }
+  )
+
+  const hotelsData = (await hotelsRes.json().catch(() => ({}))) as Record<string, unknown>
+  if (!hotelsRes.ok || hotelsData.status === false) {
+    return []
+  }
+  return extractHotelsFromSearchResponse(hotelsData)
+}
+
 export async function searchBookingHotels(params: {
   displayLocation: string
   /** Očiščeno mesto — obvezno za DataCrawler query (iz /api/hotels) */
@@ -295,37 +361,21 @@ export async function searchBookingHotels(params: {
   const children = Math.max(0, params.children ?? 0)
   const rooms = Math.max(1, params.rooms ?? 1)
 
-  const searchParams = new URLSearchParams({
-    dest_id: dest.destId,
-    search_type: dest.searchType,
-    arrival_date: formatCalendarDate(params.checkIn),
-    departure_date: formatCalendarDate(params.checkOut),
-    adults: String(adults),
-    room_qty: String(rooms),
-    page_number: '1',
-    units: 'metric',
-    temperature_unit: 'c',
-    languagecode: BOOKING_LANGUAGE,
-    currency_code: 'EUR',
-  })
-  const childrenAge = defaultChildrenAges(children)
-  if (childrenAge) searchParams.set('children_age', childrenAge)
-
-  const hotelsRes = await fetch(
-    `https://${BOOKING_HOST}/api/v1/hotels/searchHotels?${searchParams}`,
-    { headers: bookingHeaders(), cache: 'no-store' }
-  )
-
-  const hotelsData = (await hotelsRes.json().catch(() => ({}))) as Record<string, unknown>
-  if (!hotelsRes.ok || hotelsData.status === false) {
-    const msg = formatBookingApiError(hotelsData)
-    console.error('[booking] searchHotels failed', hotelsRes.status, msg, hotelsData)
-    return { results: [], error: msg }
+  const pageParams = {
+    checkIn: params.checkIn,
+    checkOut: params.checkOut,
+    adults,
+    children,
+    rooms,
   }
 
-  const hotels = extractHotelsFromSearchResponse(hotelsData)
+  const [page1, page2] = await Promise.all([
+    fetchSearchHotelsPage(dest, pageParams, 1),
+    fetchSearchHotelsPage(dest, pageParams, 2),
+  ])
+
+  const hotels = [...page1, ...page2]
   if (!hotels.length) {
-    console.warn('[booking] searchHotels empty payload keys', Object.keys(hotelsData))
     return { results: [], error: 'Za izbrane datume ni hotelov na Booking.' }
   }
 
@@ -333,7 +383,7 @@ export async function searchBookingHotels(params: {
   const seenNames = new Set<string>()
 
   const mapped = await Promise.all(
-    hotels.slice(0, 24).map(async (h) => {
+    hotels.slice(0, ROUTE_SEARCH_MAX_HOTELS).map(async (h, index) => {
       const pp = (h.property ?? {}) as Record<string, unknown>
       const hotelId = String(h.hotel_id ?? h.hotelId ?? pp.id ?? '')
       if (!hotelId || seenIds.has(hotelId)) return null
@@ -360,7 +410,7 @@ export async function searchBookingHotels(params: {
         h.url ?? h.hotel_url ?? pp.url ?? pp.booking_url ?? ''
       ).trim()
 
-      if (hotelId) {
+      if (hotelId && index < GALLERY_FETCH_LIMIT) {
         const detailsPhotos = await fetchBookingHotelGallery(
           hotelId,
           params.checkIn,
@@ -376,7 +426,9 @@ export async function searchBookingHotels(params: {
       )
       if (gallery[0]) imageUrl = gallery[0]
 
-      return {
+      const distanceFromCenterKm = extractDistanceFromCenterKm(label, h, pp)
+
+      const accommodation: Accommodation = {
         id: `booking-${hotelId}`,
         source: 'booking' as AccomSource,
         name: hotelName,
@@ -385,6 +437,7 @@ export async function searchBookingHotels(params: {
           dest.countryName || String(pp.countryCode ?? '')
         ),
         neighborhood: wishlist || undefined,
+        distanceFromCenterKm,
         description:
           label.trim() ||
           `${hotelName} v ${dest.searchCity}. Preveri razpoložljivost in ceno na Booking.com za izbrane datume.`,
@@ -417,7 +470,10 @@ export async function searchBookingHotels(params: {
         }),
         checkIn: params.checkIn,
         checkOut: params.checkOut,
-      } satisfies Accommodation
+      }
+
+      accommodation.locationAreaTag = inferLocationAreaTag(accommodation)
+      return accommodation
     })
   )
 
@@ -427,16 +483,19 @@ export async function searchBookingHotels(params: {
   for (const r of results) {
     if (!uniqueById.has(r.id)) uniqueById.set(r.id, r)
   }
-  const unique = Array.from(uniqueById.values()).slice(0, 12)
 
-  if (!unique.length) {
+  const rated = Array.from(uniqueById.values())
+    .filter((r) => r.rating >= ROUTE_STAY_MIN_RATING)
+    .sort((a, b) => recommendedStayScore(b) - recommendedStayScore(a))
+
+  if (!rated.length) {
     return {
       results: [],
-      error: 'Booking je vrnil hotele brez cen za izbrane datume — poskusi druge datume.',
+      error: `Ni hotelov z oceno gostov ≥ ${ROUTE_STAY_MIN_RATING} za izbrane datume.`,
     }
   }
 
-  return { results: unique }
+  return { results: rated }
 }
 
 function extractBookingAmenities(label: string, property: Record<string, unknown>): string[] {

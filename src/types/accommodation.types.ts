@@ -1,5 +1,6 @@
 export type AccomSource = 'booking' | 'airbnb' | 'hotels'
 export type PropertyType = 'hotel' | 'apartment' | 'villa'
+export type HotelLocationAreaTag = 'center' | 'beach' | 'airport' | 'other'
 
 export interface Accommodation {
   id: string
@@ -7,6 +8,10 @@ export interface Accommodation {
   name: string
   location: string
   neighborhood?: string
+  /** km do centra (Booking label ali API) */
+  distanceFromCenterKm?: number
+  /** Za filter lokacije na kartici dneva */
+  locationAreaTag?: HotelLocationAreaTag
   description?: string
   pricePerNight: number
   totalPrice: number
