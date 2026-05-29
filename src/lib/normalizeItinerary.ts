@@ -1,3 +1,4 @@
+import { getItineraryServerLabels } from '@/i18n/itineraryServerLabels'
 import type {
   ActivitySuggestion,
   ItineraryDay,
@@ -86,7 +87,11 @@ function formatActivityLines(activities: ActivitySuggestion[]): string[] {
   })
 }
 
-function buildDescriptionFromStructured(row: Record<string, unknown>): string {
+function buildDescriptionFromStructured(
+  row: Record<string, unknown>,
+  locale?: string
+): string {
+  const L = getItineraryServerLabels(locale)
   const parts: string[] = []
 
   const morning = normalizeActivityList(row.morning)
@@ -102,39 +107,39 @@ function buildDescriptionFromStructured(row: Record<string, unknown>): string {
         : NaN
 
   if (morning.length) {
-    parts.push('### ⏰ Dopoldan', ...formatActivityLines(morning))
+    parts.push(`### ⏰ ${L.morning}`, ...formatActivityLines(morning))
   }
   if (afternoon.length) {
-    parts.push('### 🌤 Popoldan', ...formatActivityLines(afternoon))
+    parts.push(`### 🌤 ${L.afternoon}`, ...formatActivityLines(afternoon))
   }
   if (evening) {
-    parts.push('### 🌙 Večer')
-    const rest = evening.restaurant || 'Večerja'
+    parts.push(`### 🌙 ${L.evening}`)
+    const rest = evening.restaurant || L.dinner
     const cuisine = evening.cuisine ? ` · ${evening.cuisine}` : ''
-    const price = evening.pricePerPerson ? ` · ${evening.pricePerPerson}/osebo` : ''
+    const price = evening.pricePerPerson ? ` · ${evening.pricePerPerson}${L.perPerson}` : ''
     parts.push(`- **${rest}**${cuisine}${price}`)
   }
   if (transport && transport.type !== 'none') {
     const label =
       transport.type === 'flight'
-        ? 'Let'
+        ? L.transportFlight
         : transport.type === 'ferry'
-          ? 'Trajekt'
+          ? L.transportFerry
           : transport.type === 'bus'
-            ? 'Avtobus'
+            ? L.transportBus
             : transport.type === 'car'
-              ? 'Avto'
-              : 'Prevoz'
+              ? L.transportCar
+              : L.transport
     const dur = transport.duration ? ` · ${transport.duration}` : ''
     const cost = transport.cost ? ` · ${transport.cost}` : ''
     const desc = transport.description ? `\n${transport.description}` : ''
-    parts.push(`**Prevoz:** ${label}${dur}${cost}${desc}`)
+    parts.push(`**${L.transport}:** ${label}${dur}${cost}${desc}`)
   }
   if (travelHack) {
-    parts.push(`**💡 Travel Hack:** ${travelHack}`)
+    parts.push(`**💡 ${L.travelHack}:** ${travelHack}`)
   }
   if (Number.isFinite(dailyBudget) && dailyBudget > 0) {
-    parts.push(`**Dnevni proračun:** cca. ${Math.round(dailyBudget)} €`)
+    parts.push(`**${L.dailyBudget}:** cca. ${Math.round(dailyBudget)} €`)
   }
 
   return parts.join('\n')
@@ -164,7 +169,7 @@ export function syncItineraryDayLabels(days: ItineraryDay[]): ItineraryDay[] {
 }
 
 /** AI JSON → konsistenten itinerar s predlogi */
-export function normalizeItineraryDays(days: unknown[]): ItineraryDay[] {
+export function normalizeItineraryDays(days: unknown[], locale?: string): ItineraryDay[] {
   if (!Array.isArray(days)) return []
 
   const out: ItineraryDay[] = []
@@ -226,7 +231,7 @@ export function normalizeItineraryDays(days: unknown[]): ItineraryDay[] {
         }))
     }
 
-    const structuredDescription = buildDescriptionFromStructured(row)
+    const structuredDescription = buildDescriptionFromStructured(row, locale)
     const legacyDescription = asString(row.description)
     const description = structuredDescription || legacyDescription
 

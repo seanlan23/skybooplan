@@ -1,6 +1,6 @@
-import type { Messages } from './types'
+import type { DeepPartialMessages } from './types'
 
-export const it: Messages = {
+export const it: DeepPartialMessages = {
   common: {
     help: 'Aiuto',
     loading: 'Caricamento...',

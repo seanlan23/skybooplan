@@ -1,24 +1,29 @@
 'use client'
-import { useRef, useEffect, useState } from 'react'
+import { useRef, useEffect, useState, useMemo } from 'react'
 import { ChevronDown, Check } from 'lucide-react'
 import { useSearchStore, type TripType } from '@/store/useSearchStore'
 import { cn } from '@/lib/utils'
-
-const OPTIONS: { value: TripType; label: string }[] = [
-  { value: 'return', label: 'Return' },
-  { value: 'one_way', label: 'One way' },
-]
+import { useTranslations } from '@/i18n/LocaleProvider'
 
 interface TripTypeDropdownProps {
   onDark?: boolean
 }
 
 export function TripTypeDropdown({ onDark = false }: TripTypeDropdownProps) {
+  const { t } = useTranslations()
   const { tripType, setTripType } = useSearchStore()
   const [open, setOpen] = useState(false)
   const rootRef = useRef<HTMLDivElement>(null)
 
-  const current = OPTIONS.find((o) => o.value === tripType) ?? OPTIONS[0]
+  const options: { value: TripType; label: string }[] = useMemo(
+    () => [
+      { value: 'return', label: t('search.returnTrip') },
+      { value: 'one_way', label: t('search.oneWay') },
+    ],
+    [t]
+  )
+
+  const current = options.find((o) => o.value === tripType) ?? options[0]
 
   useEffect(() => {
     function onDocClick(e: MouseEvent) {
@@ -58,7 +63,7 @@ export function TripTypeDropdown({ onDark = false }: TripTypeDropdownProps) {
           role="listbox"
           className="absolute left-0 top-full mt-2 z-[300] min-w-[160px] bg-white border border-slate-200 rounded-xl shadow-lg py-1 overflow-hidden"
         >
-          {OPTIONS.map((opt) => (
+          {options.map((opt) => (
             <button
               key={opt.value}
               type="button"
@@ -71,7 +76,7 @@ export function TripTypeDropdown({ onDark = false }: TripTypeDropdownProps) {
               className={cn(
                 'w-full flex items-center justify-between gap-3 px-4 py-2.5 text-sm text-left transition-colors',
                 tripType === opt.value
-                  ? /* BACKUP: 'bg-sky-50 text-sky-700 font-semibold' */ 'bg-orange-500 text-white font-semibold hover:bg-orange-600'
+                  ? 'bg-orange-500 text-white font-semibold hover:bg-orange-600'
                   : 'text-slate-700 hover:bg-slate-50'
               )}
             >

@@ -117,6 +117,20 @@ export function FlightResults({
     return sortTabPriceHints(displayOffers)
   }, [displayOffers, showMockPreview])
 
+  const sortLabel =
+    sortMode === 'best'
+      ? t('flights.sortBestLabel')
+      : sortMode === 'cheapest'
+        ? t('flights.sortCheapestLabel')
+        : t('flights.sortFastestLabel')
+
+  const flightUnitLabel = (count: number) =>
+    count === 1
+      ? t('flights.flightUnitOne')
+      : count === 2
+        ? t('flights.flightUnitTwo')
+        : t('flights.flightUnitMany')
+
   const showSortTabs = !isSearching && sortedOffers.length > 0
   const travelpayoutsNote = getTravelpayoutsPendingNote()
 
@@ -145,12 +159,12 @@ export function FlightResults({
       {!isSearching && (
         <p className="text-sm text-slate-600 mb-2 shrink-0">
           {showMockPreview
-            ? 'Primeri letov — izpolni iskalnik in klikni Išči'
+            ? t('flights.mockPreview')
             : offers.length > 0
-              ? `${offers.length} letov · razvrščeno: ${sortMode === 'best' ? 'Najboljše' : sortMode === 'cheapest' ? 'Najcenejše' : 'Najhitrejše'}`
+              ? t('flights.resultsCount', { count: offers.length, sort: sortLabel })
               : hasSearched
-                ? 'Ni najdenih letov za izbrane datume'
-                : 'Rezultati letov'}
+                ? t('flights.noResults')
+                : t('flights.resultsTitle')}
         </p>
       )}
 
@@ -162,9 +176,7 @@ export function FlightResults({
 
       {!isSearching && duffelTestMode && offers.length > 0 && (
         <div className="p-3 mb-2 bg-amber-50 border border-amber-200 rounded-lg text-sm text-amber-900 shrink-0">
-          <strong>Testni podatki (Duffel sandbox)</strong> — to niso resni leti v prometu (npr.
-          «Duffel Airways», British Airways direktno iz LJU). Za žive cene uporabi{' '}
-          <strong>Izberi</strong> → Skyscanner ali preklopi na Duffel <em>live</em> ključ.
+          <strong>{t('flights.testModeTitle')}</strong> — {t('flights.testModeBody')}
         </div>
       )}
 
@@ -179,7 +191,7 @@ export function FlightResults({
               className="flex items-center justify-center gap-2 rounded-lg border border-sky-200 bg-sky-50 px-4 py-2.5 text-sm font-semibold text-sky-700 hover:bg-sky-100 transition-colors"
             >
               <ExternalLink className="w-4 h-4" />
-              Odpri iskanje na Skyscanner
+              {t('flights.openSkyscanner')}
             </a>
             {travelpayoutsNote && (
               <p className="text-[11px] text-slate-500 text-center leading-snug px-1">
@@ -223,9 +235,12 @@ export function FlightResults({
               className="mt-3 w-full flex items-center justify-center gap-2 rounded-lg border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-sky-700 hover:bg-sky-50 transition-colors shrink-0"
             >
               <ChevronDown className="w-4 h-4" aria-hidden />
-              Prikaži več
+              {t('flights.showMore')}
               {hiddenCardCount > 0
-                ? ` · še ${hiddenCardCount} ${hiddenCardCount === 1 ? 'let' : hiddenCardCount === 2 ? 'leta' : 'letov'}`
+                ? ` · ${t('flights.showMoreFlights', {
+                    count: hiddenCardCount,
+                    countLabel: flightUnitLabel(hiddenCardCount),
+                  })}`
                 : ''}
             </button>
           )}
@@ -236,7 +251,7 @@ export function FlightResults({
               onClick={() => setShowAllCards(false)}
               className="mt-3 w-full flex items-center justify-center gap-2 rounded-lg border border-slate-200 bg-white px-4 py-2.5 text-sm font-medium text-slate-600 hover:bg-slate-50 transition-colors shrink-0"
             >
-              Prikaži manj
+              {t('flights.showLess')}
             </button>
           )}
         </>

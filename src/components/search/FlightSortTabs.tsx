@@ -2,18 +2,12 @@
 
 import type { FlightSortMode } from '@/lib/sortFlights'
 import { cn } from '@/lib/utils'
-
-const TABS: { id: FlightSortMode; label: string }[] = [
-  { id: 'best', label: 'Best' },
-  { id: 'cheapest', label: 'Cheapest' },
-  { id: 'fastest', label: 'Fastest' },
-]
+import { useTranslations } from '@/i18n/LocaleProvider'
 
 interface FlightSortTabsProps {
   active: FlightSortMode
   onChange: (mode: FlightSortMode) => void
   disabled?: boolean
-  /** Show lowest price per tab when available */
   priceHints?: Partial<Record<FlightSortMode, string>>
 }
 
@@ -23,9 +17,17 @@ export function FlightSortTabs({
   disabled,
   priceHints,
 }: FlightSortTabsProps) {
+  const { t } = useTranslations()
+
+  const tabs: { id: FlightSortMode; label: string }[] = [
+    { id: 'best', label: t('flights.sortBest') },
+    { id: 'cheapest', label: t('flights.sortCheapest') },
+    { id: 'fastest', label: t('flights.sortFastest') },
+  ]
+
   return (
-    <div className="flex gap-2 mb-3" role="tablist" aria-label="Razvrsti lete">
-      {TABS.map((tab) => {
+    <div className="flex gap-2 mb-3" role="tablist" aria-label={t('flights.sortFlightsAria')}>
+      {tabs.map((tab) => {
         const isActive = active === tab.id
         return (
           <button
@@ -53,7 +55,7 @@ export function FlightSortTabs({
                   isActive ? 'text-sky-100' : 'text-slate-500'
                 )}
               >
-                from {priceHints[tab.id]}
+                {t('flights.fromPrice', { price: priceHints[tab.id]! })}
               </span>
             )}
           </button>

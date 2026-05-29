@@ -108,9 +108,26 @@ export function formatLegDuration(duration: string): string {
   return duration || '—'
 }
 
-export function formatStopsLine(stops: number, stopoverCode: string | null): string {
-  if (stops <= 0) return 'Direct'
-  if (stops === 1 && stopoverCode) return `1 stop ${stopoverCode}`
-  if (stops === 1) return '1 stop'
-  return `${stops} stops`
+export interface StopsLabels {
+  direct: string
+  oneStop: string
+  oneStopAt: (code: string) => string
+  stopsMany: (count: number) => string
+}
+
+export function formatStopsLine(
+  stops: number,
+  stopoverCode: string | null,
+  labels?: StopsLabels
+): string {
+  const L = labels ?? {
+    direct: 'Direct',
+    oneStop: '1 stop',
+    oneStopAt: (code: string) => `1 stop ${code}`,
+    stopsMany: (count: number) => `${count} stops`,
+  }
+  if (stops <= 0) return L.direct
+  if (stops === 1 && stopoverCode) return L.oneStopAt(stopoverCode)
+  if (stops === 1) return L.oneStop
+  return L.stopsMany(stops)
 }

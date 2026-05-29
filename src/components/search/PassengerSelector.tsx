@@ -1,25 +1,12 @@
 'use client'
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useMemo } from 'react'
 import { Users, ChevronDown, Plus, Minus } from 'lucide-react'
 import { useSearchStore } from '@/store/useSearchStore'
 import { cn } from '@/lib/utils'
 import type { SearchState } from '@/store/useSearchStore'
 import { fieldLabelClass, fieldShellClass, type SearchFieldVariant } from './searchBarFieldStyles'
 import { useSearchUIStore } from '@/store/useSearchUIStore'
-
-const CABIN_OPTIONS = [
-  { value: 'economy', label: 'Economy' },
-  { value: 'premium_economy', label: 'Prem. Economy' },
-  { value: 'business', label: 'Business' },
-  { value: 'first', label: 'First Class' },
-] as const
-
-function formatRoomCount(count: number): string {
-  if (count === 1) return '1 soba'
-  if (count === 2) return '2 sobi'
-  if (count === 3 || count === 4) return `${count} sobe`
-  return `${count} sob`
-}
+import { useTranslations } from '@/i18n/LocaleProvider'
 
 interface PassengerSelectorProps {
   open: boolean
@@ -34,6 +21,7 @@ export function PassengerSelector({
   variant = 'default',
   className,
 }: PassengerSelectorProps) {
+  const { t } = useTranslations()
   const {
     adults,
     children,
@@ -51,11 +39,30 @@ export function PassengerSelector({
   const [draftRooms, setDraftRooms] = useState(rooms)
   const [draftCabinClass, setDraftCabinClass] = useState<SearchState['cabinClass']>(cabinClass)
 
+  const cabinOptions = useMemo(
+    () =>
+      [
+        { value: 'economy' as const, label: t('searchFields.economy') },
+        { value: 'premium_economy' as const, label: t('searchFields.premiumEconomy') },
+        { value: 'business' as const, label: t('searchFields.business') },
+        { value: 'first' as const, label: t('searchFields.firstClass') },
+      ],
+    [t]
+  )
+
+  function formatRoomCount(count: number): string {
+    if (count === 1) return t('searchFields.roomsOne')
+    if (count === 2) return t('searchFields.roomsTwo')
+    if (count === 3 || count === 4) return t('searchFields.roomsFew', { count })
+    return t('searchFields.roomsMany', { count })
+  }
+
   const isHotelsOnly = searchMode === 'hotels_only'
-  const cabinLabel = CABIN_OPTIONS.find((o) => o.value === cabinClass)?.label ?? 'Economy'
+  const cabinLabel =
+    cabinOptions.find((o) => o.value === cabinClass)?.label ?? t('searchFields.economy')
   const triggerLabel = isHotelsOnly
-    ? `${totalPassengers} pot. • ${formatRoomCount(rooms)}`
-    : `${totalPassengers} pot.`
+    ? `${t('searchFields.passengersShort', { count: totalPassengers })} • ${formatRoomCount(rooms)}`
+    : t('searchFields.passengersShort', { count: totalPassengers })
 
   useEffect(() => {
     if (open) {
@@ -85,12 +92,14 @@ export function PassengerSelector({
   }
 
   const isSky = variant === 'skyscanner'
-  const paxLabel = isHotelsOnly ? 'Guests' : 'Travellers'
+  const paxLabel = isHotelsOnly ? t('searchFields.guests') : t('searchFields.travellers')
 
   return (
     <div className={cn('relative min-w-0 h-full w-full', className)}>
       {!isSky && (
-        <label className={fieldLabelClass(variant)}>{isHotelsOnly ? 'Gostje' : 'Potniki'}</label>
+        <label className={fieldLabelClass(variant)}>
+          {isHotelsOnly ? t('searchFields.guests') : t('searchFields.travellers')}
+        </label>
       )}
       <button
         type="button"
@@ -142,19 +151,21 @@ export function PassengerSelector({
         <div
           className="absolute top-full right-0 mt-2 z-50 bg-white border border-slate-200 rounded-2xl shadow-search p-4 w-64"
           role="dialog"
-          aria-label={isHotelsOnly ? 'Izbira gostov in sob' : 'Izbira potnikov'}
+          aria-label={
+            isHotelsOnly ? t('searchFields.paxDialogHotels') : t('searchFields.paxDialogFlights')
+          }
         >
           <Counter
-            label="Odrasli"
-            sub="18+ let"
+            label={t('searchFields.adults')}
+            sub={t('searchFields.ageAdult')}
             value={draftAdults}
             min={1}
             max={9}
             onChange={(v) => setDraftAdults(v)}
           />
           <Counter
-            label="Otroci"
-            sub="0–17 let"
+            label={t('searchFields.children')}
+            sub={t('searchFields.ageChild')}
             value={draftChildren}
             min={0}
             max={8}
@@ -162,8 +173,8 @@ export function PassengerSelector({
           />
           {isHotelsOnly && (
             <Counter
-              label="Sobe"
-              sub="Število sob"
+              label={t('searchFields.rooms')}
+              sub={t('searchFields.rooms')}
               value={draftRooms}
               min={1}
               max={8}
@@ -173,9 +184,9 @@ export function PassengerSelector({
 
           {!isHotelsOnly && (
             <div className="mt-3 pt-3 border-t border-slate-100">
-              <p className="text-xs text-slate-500 mb-2 font-medium">Razred leta</p>
+              <p className="text-xs text-slate-500 mb-2 font-medium">{t('searchFields.cabinClass')}</p>
               <div className="grid grid-cols-2 gap-1.5">
-                {CABIN_OPTIONS.map((o) => (
+                {cabinOptions.map((o) => (
                   <button
                     key={o.value}
                     type="button"
@@ -183,7 +194,7 @@ export function PassengerSelector({
                     className={cn(
                       'px-2 py-1.5 text-xs rounded-xl transition-all font-medium',
                       draftCabinClass === o.value
-                        ? /* BACKUP: 'bg-sky-500 text-white' */ 'bg-orange-500 text-white hover:bg-orange-600'
+                        ? 'bg-orange-500 text-white hover:bg-orange-600'
                         : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
                     )}
                   >
@@ -199,11 +210,10 @@ export function PassengerSelector({
             onClick={handleConfirm}
             className={cn(
               'w-full mt-3 py-2 text-white text-sm font-semibold rounded-xl transition-colors',
-              /* BACKUP: isHotelsOnly ? 'bg-leaf-500 hover:bg-leaf-600' : 'bg-sky-500 hover:bg-sky-600' */
               'bg-sky-600 hover:bg-sky-700'
             )}
           >
-            Potrdi
+            {t('common.confirm')}
           </button>
         </div>
       )}
@@ -211,8 +221,20 @@ export function PassengerSelector({
   )
 }
 
-function Counter({ label, sub, value, min, max, onChange }: {
-  label: string; sub: string; value: number; min: number; max: number; onChange: (v: number) => void
+function Counter({
+  label,
+  sub,
+  value,
+  min,
+  max,
+  onChange,
+}: {
+  label: string
+  sub: string
+  value: number
+  min: number
+  max: number
+  onChange: (v: number) => void
 }) {
   return (
     <div className="flex items-center justify-between py-2.5">

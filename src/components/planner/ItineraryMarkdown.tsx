@@ -1,6 +1,7 @@
 'use client'
 
 import { cn } from '@/lib/utils'
+import { useTranslations } from '@/i18n/LocaleProvider'
 
 type TimeOfDayKind = 'dopoldan' | 'popoldan' | 'vecer'
 
@@ -13,20 +14,38 @@ const TIME_OF_DAY_STYLES: Record<
   vecer: { border: 'border-l-[#6366f1]', emoji: '🌙' },
 }
 
-function parseTimeOfDayHeading(text: string): {
+function parseTimeOfDayHeading(
+  text: string,
+  labels: { morning: string; afternoon: string; evening: string }
+): {
   kind: TimeOfDayKind | null
   label: string
 } {
   const raw = text.replace(/^###\s*/, '').trim()
   const lower = raw.toLowerCase()
-  if (lower.includes('dopoldan')) {
-    return { kind: 'dopoldan', label: raw.replace(/^⏰\s*/, '').trim() || 'Dopoldan' }
+  if (
+    lower.includes('dopoldan') ||
+    lower.includes('morning') ||
+    lower.includes('jutro') ||
+    lower.includes('vormittag')
+  ) {
+    return { kind: 'dopoldan', label: raw.replace(/^⏰\s*/, '').trim() || labels.morning }
   }
-  if (lower.includes('popoldan')) {
-    return { kind: 'popoldan', label: raw.replace(/^🌤\s*/, '').trim() || 'Popoldan' }
+  if (
+    lower.includes('popoldan') ||
+    lower.includes('afternoon') ||
+    lower.includes('poslijepodne') ||
+    lower.includes('nachmittag')
+  ) {
+    return { kind: 'popoldan', label: raw.replace(/^🌤\s*/, '').trim() || labels.afternoon }
   }
-  if (lower.includes('večer') || lower.includes('vecer')) {
-    return { kind: 'vecer', label: raw.replace(/^🌙\s*/, '').trim() || 'Večer' }
+  if (
+    lower.includes('večer') ||
+    lower.includes('vecer') ||
+    lower.includes('evening') ||
+    lower.includes('abend')
+  ) {
+    return { kind: 'vecer', label: raw.replace(/^🌙\s*/, '').trim() || labels.evening }
   }
   return { kind: null, label: raw }
 }
@@ -63,6 +82,12 @@ function renderTravelHackContent(trimmed: string) {
 
 /** Preprost prikaz Markdown odstavkov iz AI (brez zunanjih odvisnosti). */
 export function ItineraryMarkdown({ text }: { text: string }) {
+  const { t } = useTranslations()
+  const timeLabels = {
+    morning: t('dayCard.morning'),
+    afternoon: t('dayCard.afternoon'),
+    evening: t('dayCard.evening'),
+  }
   const lines = text.split('\n')
 
   return (
@@ -72,7 +97,7 @@ export function ItineraryMarkdown({ text }: { text: string }) {
         if (!trimmed) return <div key={i} className="h-2" />
 
         if (trimmed.startsWith('### ')) {
-          const { kind, label } = parseTimeOfDayHeading(trimmed)
+          const { kind, label } = parseTimeOfDayHeading(trimmed, timeLabels)
           if (kind) {
             const style = TIME_OF_DAY_STYLES[kind]
             return (
@@ -103,24 +128,13 @@ export function ItineraryMarkdown({ text }: { text: string }) {
           )
         }
 
-        if (trimmed.startsWith('## ')) {
-          return (
-            <h3
-              key={i}
-              className="text-sm font-semibold text-slate-800 mt-3 first:mt-0 leading-snug"
-            >
-              {trimmed.slice(3)}
-            </h3>
-          )
-        }
-
         if (isTravelHackLine(trimmed)) {
           return (
             <div
               key={i}
               className="bg-[#fffbeb] border-l-4 border-[#f59e0b] rounded-r-lg px-3.5 py-3 my-3 text-sm text-amber-950 leading-[1.6]"
             >
-              <span className="font-bold text-amber-800">💡 Travel Hack: </span>
+              <span className="font-bold text-amber-800">💡 {t('dayCard.travelHack')}: </span>
               {renderTravelHackContent(trimmed)}
             </div>
           )

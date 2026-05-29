@@ -16,6 +16,7 @@ import {
   parseItineraryResponse,
   type ItineraryPlannerInput,
 } from '@/lib/itineraryPrompt'
+import { getAiResponseLanguage } from '@/lib/localeAiLanguage'
 import { buildSkybooplanItinerarySystemPrompt } from '@/lib/skybooplanItinerarySystemPrompt'
 import { buildFlightContextForAI, formatFlightTimeForPrompt } from '@/lib/flightPromptContext'
 import { mergeItineraryDaysByNumber } from '@/lib/normalizeItinerary'
@@ -59,15 +60,21 @@ async function streamCompletionToBuffer(
   return { buffer, finishReason }
 }
 
-function parseBufferToDays(buffer: string): {
+function parseBufferToDays(
+  buffer: string,
+  locale?: string
+): {
   days: ItineraryDay[]
   tripSummary: ReturnType<typeof parseItineraryResponse>['tripSummary']
 } {
   const raw = parseItineraryFromStreamBuffer(buffer)
-  const { days, tripSummary } = parseItineraryResponse({
-    days: raw.days,
-    tripSummary: raw.tripSummary,
-  })
+  const { days, tripSummary } = parseItineraryResponse(
+    {
+      days: raw.days,
+      tripSummary: raw.tripSummary,
+    },
+    locale
+  )
   return { days, tripSummary }
 }
 
@@ -127,6 +134,8 @@ export async function POST(req: NextRequest) {
     checkOutDate: '—',
     passengerCount: 2,
     travelNights,
+    locale: 'sl',
+    responseLanguage: getAiResponseLanguage('sl'),
   }
 
   const systemPrompt = buildSkybooplanItinerarySystemPrompt(planner)
@@ -173,7 +182,7 @@ export async function POST(req: NextRequest) {
             emitPartialIfNeeded
           )
 
-          const parsed = parseBufferToDays(buffer)
+          const parsed = parseBufferToDays(buffer, planner.locale)
           mergedDays = mergeItineraryDaysByNumber(mergedDays, parsed.days)
           if (parsed.tripSummary) tripSummary = parsed.tripSummary
 

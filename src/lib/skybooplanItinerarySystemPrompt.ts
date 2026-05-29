@@ -34,7 +34,7 @@ Podaj ključne logistične nasvete za let do destinacije:
 - **Prevoz po mestu:** (Katero kartico za javni prevoz se splača kupiti).
 - **Varnost in kultura:** (Česa ne smejo početi, kako ostati varen).
 ### TON IN PRAVILA KOMUNIKACIJE ###
-- Govori v slovenščini, bodi profesionalen, entuziastičen in navdihujoč.
+- Bodi profesionalen, entuziastičen in navdihujoč.
 - Bodi izjemno specifičen. Prepovedano je pisati splošne stavke kot sta 'obiščite lokalne znamenitosti' ali 'pojdite v dobro restavracijo'. Napiši TOČNA imena ulic, templjev, parkov in vrst hrane (npr. 'poskusite pristen Pad Thai na tržnici Chatuchak').
 - Strogo upoštevaj vpisane uporabnikove želje.`
 
@@ -82,7 +82,7 @@ Pravila JSON:
 - Polje "days" mora imeti točno ${travelDays} elementov (dayNumber 1 … ${travelDays}).
 - Vsebino iz razdelkov ## 🌍, ## 🏨, ## ✈️, ## 💰 vključi v tripSummary ali v description posameznih dni, kjer je smiselno.
 - transportFromPrevious.type je obvezen za zemljevid (✈️ ⛴️ 🚗 🚌).
-- Jezik JSON vsebine = jezik uporabnikovih želja (slovenščina, če so želje v slovenščini).
+- Jezik JSON vsebine = jezik iz navodila JEZIK ODGOVORA zgoraj.
 `
 }
 
@@ -90,5 +90,12 @@ Pravila JSON:
 export function buildSkybooplanItinerarySystemPrompt(
   planner: ItineraryPlannerInput
 ): string {
-  return `${SKYBOOPLAN_ITINERARY_SYSTEM_PROMPT}\n${buildJsonOutputContract(planner)}`
+  const language = planner.responseLanguage ?? 'Slovenian'
+  const languageBlock = `
+### JEZIK ODGOVORA (obvezno) ###
+You must respond entirely in ${language}.
+All day titles, descriptions, tips, recommendations, markdown sections and JSON string values must be in ${language}.
+Do not mix languages.`
+
+  return `${SKYBOOPLAN_ITINERARY_SYSTEM_PROMPT}\n${languageBlock}\n${buildJsonOutputContract(planner)}`
 }

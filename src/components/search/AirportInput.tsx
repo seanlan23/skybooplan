@@ -62,18 +62,18 @@ export function AirportInput({
     labelOverride ??
     (variant === 'skyscanner'
       ? role === 'origin'
-        ? 'From'
-        : 'To'
+        ? t('searchFields.from')
+        : t('searchFields.to')
       : role === 'origin'
-        ? 'Odhod iz'
-        : 'Destinacija')
+        ? t('searchFields.from')
+        : t('searchFields.to'))
   const ph =
     placeholder ??
     (variant === 'skyscanner'
-      ? 'City or airport'
+      ? t('searchFields.cityOrAirport')
       : role === 'origin'
-        ? 'Dodaj letališče...'
-        : 'Kamor greš...')
+        ? t('searchFields.addAirport')
+        : t('searchFields.whereToFly'))
   const isSky = variant === 'skyscanner'
   const showDropdown = focused && query.trim().length >= 2
 

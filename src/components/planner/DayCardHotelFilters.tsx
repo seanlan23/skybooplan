@@ -4,6 +4,7 @@ import type { ReactNode } from 'react'
 import { cn } from '@/lib/utils'
 import type { RouteStayFilterState, RouteStayPriceSort, RouteStayRatingSort } from '@/lib/routeStayHotels'
 import type { LocationAreaFilter } from '@/lib/hotelLocationArea'
+import { useTranslations } from '@/i18n/LocaleProvider'
 
 interface DayCardHotelFiltersProps {
   filters: RouteStayFilterState
@@ -35,14 +36,16 @@ function FilterBtn({
   )
 }
 
-const LOCATION_OPTIONS: { value: LocationAreaFilter; label: string }[] = [
-  { value: 'all', label: 'Vse' },
-  { value: 'center', label: 'Center' },
-  { value: 'beach', label: 'Plaža' },
-  { value: 'airport', label: 'Letališče' },
-]
-
 export function DayCardHotelFilters({ filters, onChange }: DayCardHotelFiltersProps) {
+  const { t } = useTranslations()
+
+  const locationOptions: { value: LocationAreaFilter; label: string }[] = [
+    { value: 'all', label: t('hotels.all') },
+    { value: 'center', label: t('hotels.center') },
+    { value: 'beach', label: t('hotels.beach') },
+    { value: 'airport', label: t('hotels.airport') },
+  ]
+
   const setPrice = (priceSort: RouteStayPriceSort) => {
     onChange({
       ...filters,
@@ -65,34 +68,34 @@ export function DayCardHotelFilters({ filters, onChange }: DayCardHotelFiltersPr
 
   return (
     <div className="mb-2 flex flex-wrap items-center gap-x-2 gap-y-1.5 text-[11px] text-slate-600">
-      <span className="font-medium text-slate-500 shrink-0">Razvrsti po:</span>
+      <span className="font-medium text-slate-500 shrink-0">{t('hotels.sortBy')}</span>
       <div className="flex flex-wrap items-center gap-1">
         <FilterBtn active={filters.priceSort === 'price_asc'} onClick={() => setPrice('price_asc')}>
-          Cena ↑
+          {t('hotels.priceAsc')}
         </FilterBtn>
         <FilterBtn
           active={filters.priceSort === 'price_desc'}
           onClick={() => setPrice('price_desc')}
         >
-          Cena ↓
+          {t('hotels.priceDesc')}
         </FilterBtn>
         <FilterBtn
           active={filters.ratingSort === 'rating_asc'}
           onClick={() => setRating('rating_asc')}
         >
-          Ocena ↑
+          {t('hotels.ratingAsc')}
         </FilterBtn>
         <FilterBtn
           active={filters.ratingSort === 'rating_desc'}
           onClick={() => setRating('rating_desc')}
         >
-          Ocena ↓
+          {t('hotels.ratingDesc')}
         </FilterBtn>
       </div>
 
-      <span className="font-medium text-slate-500 shrink-0 ml-0.5">Lokacija:</span>
+      <span className="font-medium text-slate-500 shrink-0 ml-0.5">{t('hotels.location')}</span>
       <div className="flex flex-wrap items-center gap-1">
-        {LOCATION_OPTIONS.map((opt) => (
+        {locationOptions.map((opt) => (
           <FilterBtn
             key={opt.value}
             active={filters.locationFilter === opt.value}

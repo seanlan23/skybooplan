@@ -13,6 +13,10 @@ export interface ItineraryPlannerInput {
   dailyBudget?: string
   specialRequests?: string
   travelNights: number
+  /** App locale code (sl, en, de, hr, …) */
+  locale?: string
+  /** Full language name for AI prompts */
+  responseLanguage?: string
 }
 
 const JSON_OUTPUT_SCHEMA = `
@@ -184,12 +188,15 @@ export function normalizeTripSummary(raw: unknown): ItineraryTripSummary | null 
 }
 
 /** AI JSON → dnevi + povzetek */
-export function parseItineraryResponse(parsed: {
-  days?: unknown[]
-  tripSummary?: unknown
-}): { days: ItineraryDay[]; tripSummary: ItineraryTripSummary | null } {
+export function parseItineraryResponse(
+  parsed: {
+    days?: unknown[]
+    tripSummary?: unknown
+  },
+  locale?: string
+): { days: ItineraryDay[]; tripSummary: ItineraryTripSummary | null } {
   return {
-    days: normalizeItineraryDays(parsed.days ?? []),
+    days: normalizeItineraryDays(parsed.days ?? [], locale),
     tripSummary: normalizeTripSummary(parsed.tripSummary),
   }
 }

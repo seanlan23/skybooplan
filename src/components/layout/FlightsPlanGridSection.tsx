@@ -237,7 +237,7 @@ function PlannerExportActions() {
       await sendItineraryToMakePdfWebhook(itineraryData)
     } catch (err) {
       console.error('[pdf export]', err)
-      setPdfError('PDF trenutno ni bilo mogoče generirati. Poskusi znova.')
+      setPdfError(t('errors.pdfExportFailed'))
     } finally {
       setIsPdfExporting(false)
     }

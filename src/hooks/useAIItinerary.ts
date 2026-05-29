@@ -36,6 +36,7 @@ import { normalizeItineraryDays, syncItineraryDayLabels } from '@/lib/normalizeI
 import { normalizeTripSummary } from '@/lib/itineraryPrompt'
 import type { ItineraryDay, ItineraryTripSummary } from '@/types/itinerary.types'
 import { useItineraryHotelsStore } from '@/store/useItineraryHotelsStore'
+import { useLocaleStore } from '@/store/useLocaleStore'
 import { resetItineraryHotelCache } from '@/hooks/useItineraryCityHotels'
 
 type StreamCallbacks = {
@@ -50,7 +51,8 @@ type StreamCallbacks = {
 async function consumeItineraryStream(
   res: Response,
   callbacks: StreamCallbacks,
-  setProgress: (n: number) => void
+  setProgress: (n: number) => void,
+  locale?: string
 ) {
   const { onDone, onPartial } = callbacks
   if (!res.body) throw new Error('No response body')
@@ -85,14 +87,14 @@ async function consumeItineraryStream(
       }
 
       if (json.partialItinerary?.length) {
-        const partial = normalizeItineraryDays(json.partialItinerary)
+        const partial = normalizeItineraryDays(json.partialItinerary, locale)
         onPartial?.(partial)
       }
 
       if (json.done && json.itinerary) {
         clearInterval(progressInterval)
         setProgress(100)
-        const days = normalizeItineraryDays(json.itinerary)
+        const days = normalizeItineraryDays(json.itinerary, locale)
         const tripSummary = json.tripSummary
           ? normalizeTripSummary(json.tripSummary)
           : null
@@ -167,6 +169,7 @@ export function useAIItinerary() {
     travelTempo,
     specialRequestsText,
   } = usePlannerStore()
+  const locale = useLocaleStore((s) => s.locale)
   const selectedFlight = useSelectedFlightStore((s) => s.selectedFlight)
   const hotelsOnlyContext = usePlannerStore((s) => s.hotelsOnlyContext)
 
@@ -205,6 +208,7 @@ export function useAIItinerary() {
       travelType: travelTypeLabel,
       dailyBudget: resolveDailyBudgetForPrompt(dailyBudgetPerPerson),
       specialRequests: buildCombinedSpecialRequests(specialRequestsText, []),
+      locale,
     })
 
     setIsGenerating(true)
@@ -265,7 +269,8 @@ export function useAIItinerary() {
           }
           },
         },
-        setProgress
+        setProgress,
+        locale
       )
     } catch (err) {
       console.error('AI itinerary error:', err)
@@ -296,6 +301,7 @@ export function useAIItinerary() {
       travelType: travelTypeLabel,
       dailyBudget: resolveDailyBudgetForPrompt(dailyBudgetPerPerson),
       specialRequests: buildCombinedSpecialRequests(specialRequestsText, []),
+      locale,
     })
 
     setIsGenerating(true)
@@ -330,7 +336,8 @@ export function useAIItinerary() {
             useAccomStore.getState().clearUserPickedHotel()
           },
         },
-        setProgress
+        setProgress,
+        locale
       )
     } catch (err) {
       console.error('AI hotels-only itinerary error:', err)
@@ -381,6 +388,7 @@ export function useAIItinerary() {
       travelType: travelStyleToPromptLabel(travelStyle),
       dailyBudget: resolveDailyBudgetForPrompt(dailyBudgetPerPerson),
       specialRequests: buildCombinedSpecialRequests(specialRequestsText, customLocations),
+      locale,
     })
 
     setIsGenerating(true)
@@ -451,7 +459,8 @@ export function useAIItinerary() {
           }
           },
         },
-        setProgress
+        setProgress,
+        locale
       )
     } catch (err) {
       console.error('AI manual itinerary error:', err)

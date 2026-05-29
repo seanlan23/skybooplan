@@ -2,7 +2,6 @@
 import { motion } from 'framer-motion'
 import { MapPin, Euro } from 'lucide-react'
 import { format } from 'date-fns'
-import { sl } from 'date-fns/locale'
 import { parseISO, startOfDay } from 'date-fns'
 import { calendarDateForDay } from '@/lib/itineraryDates'
 import { computeStayWindow } from '@/lib/itineraryStay'
@@ -15,6 +14,8 @@ import { isFirstDayForCity } from '@/lib/itineraryCitySegments'
 import type { ItineraryDay } from '@/types/itinerary.types'
 import { DayCardHotels } from './DayCardHotels'
 import { ItineraryMarkdown } from './ItineraryMarkdown'
+import { useTranslations } from '@/i18n/LocaleProvider'
+import { getDateFnsLocale } from '@/i18n/localeDateFns'
 
 interface DayCardProps {
   day: ItineraryDay
@@ -22,6 +23,7 @@ interface DayCardProps {
 }
 
 export function DayCard({ day, index }: DayCardProps) {
+  const { t, locale } = useTranslations()
   const { activeLocation, setActiveLocation, itinerary } = usePlannerStore()
   const { setActiveLocation: setAccomLocation } = useAccomStore()
   const { departureDate } = useSearchStore()
@@ -39,7 +41,7 @@ export function DayCard({ day, index }: DayCardProps) {
               ? calendarDateForDay(selectedFlight.outboundArrivalAt, day.day)
               : departureDate!),
           'EEEE, d. MMM',
-          { locale: sl }
+          { locale: getDateFnsLocale(locale) }
         )
       : null
 
@@ -129,7 +131,7 @@ export function DayCard({ day, index }: DayCardProps) {
         {suggestions.length > 0 ? (
           <div className="space-y-3 border-t border-slate-100 pt-5">
             <p className="text-[10px] font-bold uppercase tracking-wide text-slate-400">
-              Predlogi za dan
+              {t('dayCard.suggestionsForDay')}
             </p>
             <div className="space-y-2.5">
               {suggestions.map((s, i) => (

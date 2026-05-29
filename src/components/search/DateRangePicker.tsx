@@ -1,12 +1,13 @@
 'use client'
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useMemo } from 'react'
 import { format, addDays } from 'date-fns'
-import { sl } from 'date-fns/locale'
 import { CalendarDays, ChevronLeft, ChevronRight } from 'lucide-react'
 import { useSearchStore } from '@/store/useSearchStore'
 import { cn } from '@/lib/utils'
 import { fieldLabelClass, fieldShellClass, type SearchFieldVariant } from './searchBarFieldStyles'
 import { useSearchUIStore } from '@/store/useSearchUIStore'
+import { useTranslations } from '@/i18n/LocaleProvider'
+import { getDateFnsLocale } from '@/i18n/localeDateFns'
 
 const FLEX_OPTIONS = [0, 1, 2, 3, 5] as const
 
@@ -16,12 +17,14 @@ function MiniCalendar({
   selected,
   range,
   onSelect,
+  weekdayLabels,
 }: {
   month: number
   year: number
   selected: Date | null
   range: [Date | null, Date | null]
   onSelect: (d: Date) => void
+  weekdayLabels: string[]
 }) {
   const firstDay = new Date(year, month, 1).getDay()
   const daysInMonth = new Date(year, month + 1, 0).getDate()
@@ -35,7 +38,7 @@ function MiniCalendar({
   return (
     <div className="w-full">
       <div className="grid grid-cols-7 gap-0.5 mb-1">
-        {['Pon','Tor','Sre','Čet','Pet','Sob','Ned'].map(d => (
+        {weekdayLabels.map((d) => (
           <div key={d} className="text-center text-xs text-slate-400 font-medium py-1">{d}</div>
         ))}
       </div>
@@ -85,6 +88,16 @@ export function DateRangePicker({
   variant = 'default',
   className,
 }: DateRangePickerProps = {}) {
+  const { t, locale } = useTranslations()
+  const dateFnsLocale = getDateFnsLocale(locale)
+  const weekdayLabels = useMemo(
+    () =>
+      Array.from({ length: 7 }, (_, i) =>
+        format(addDays(new Date(2024, 0, 1), i), 'EEEEEE', { locale: dateFnsLocale })
+      ),
+    [dateFnsLocale]
+  )
+
   const {
     tripType,
     departureDate,
@@ -128,25 +141,26 @@ export function DateRangePicker({
 
   const depLabel = departureDate
     ? flexDays > 0
-      ? `${format(departureDate, 'd. MMM', { locale: sl })} ±${flexDays}`
-      : format(departureDate, 'd. MMM yyyy', { locale: sl })
+      ? `${format(departureDate, 'd. MMM', { locale: dateFnsLocale })} ±${flexDays}`
+      : format(departureDate, 'd. MMM yyyy', { locale: dateFnsLocale })
     : isSky
-      ? 'Add date'
+      ? t('searchFields.addDate')
       : forceRange
-        ? 'Od'
-        : 'Datum odhoda'
+        ? t('searchFields.dateFrom')
+        : t('searchFields.departureDate')
 
   const retLabel = returnDate
     ? flexDays > 0
-      ? `${format(returnDate, 'd. MMM', { locale: sl })} ±${flexDays}`
-      : format(returnDate, isSky ? 'd. MMM yyyy' : 'd. MMM yyyy', { locale: sl })
+      ? `${format(returnDate, 'd. MMM', { locale: dateFnsLocale })} ±${flexDays}`
+      : format(returnDate, 'd. MMM yyyy', { locale: dateFnsLocale })
     : isSky
-      ? 'Add date'
+      ? t('searchFields.addDate')
       : forceRange
-        ? 'Do'
-        : 'Povratek'
+        ? t('searchFields.dateTo')
+        : t('searchFields.return')
 
-  const dateLabel = labelOverride ?? (isReturn ? 'Datumi' : 'Datum odhoda')
+  const dateLabel =
+    labelOverride ?? (isReturn ? t('search.dates') : t('searchFields.departureDate'))
 
   useEffect(() => {
     if (open) useSearchUIStore.getState().openSearch()
@@ -173,7 +187,7 @@ export function DateRangePicker({
         {isSky ? (
           <div className="flex items-stretch gap-4 w-full min-w-0">
             <div className="flex flex-col min-w-0 text-left">
-              <span className={fieldLabelClass(variant)}>Depart</span>
+              <span className={fieldLabelClass(variant)}>{t('searchFields.depart')}</span>
               <span
                 className={cn(
                   'text-sm font-semibold text-slate-900 whitespace-nowrap',
@@ -193,7 +207,7 @@ export function DateRangePicker({
                 }}
                 role="presentation"
               >
-                <span className={fieldLabelClass(variant)}>Return</span>
+                <span className={fieldLabelClass(variant)}>{t('searchFields.return')}</span>
                 <span
                   className={cn(
                     'text-sm font-semibold text-slate-900 whitespace-nowrap',
@@ -241,7 +255,7 @@ export function DateRangePicker({
               <ChevronLeft className="w-4 h-4" />
             </button>
             <span className="font-semibold text-sm text-slate-700 capitalize">
-              {format(new Date(viewMonth.year, viewMonth.month), 'MMMM yyyy', { locale: sl })}
+              {format(new Date(viewMonth.year, viewMonth.month), 'MMMM yyyy', { locale: dateFnsLocale })}
             </span>
             <button onClick={() => setViewMonth(v => {
               const d = new Date(v.year, v.month + 1)
@@ -253,9 +267,9 @@ export function DateRangePicker({
 
           {isReturn && (
             <div className="mb-1 flex gap-2 text-xs text-slate-500">
-              <button type="button" onClick={() => setPicking('dep')} className={cn('font-medium', picking === 'dep' && 'text-sky-500')}>Odhod</button>
+              <button type="button" onClick={() => setPicking('dep')} className={cn('font-medium', picking === 'dep' && 'text-sky-500')}>{t('searchFields.depart')}</button>
               <span>·</span>
-              <button type="button" onClick={() => setPicking('ret')} className={cn('font-medium', picking === 'ret' && 'text-sky-500')}>Povratek</button>
+              <button type="button" onClick={() => setPicking('ret')} className={cn('font-medium', picking === 'ret' && 'text-sky-500')}>{t('searchFields.return')}</button>
             </div>
           )}
 
@@ -265,11 +279,12 @@ export function DateRangePicker({
             selected={picking === 'dep' ? departureDate : returnDate}
             range={[departureDate, returnDate]}
             onSelect={handleSelect}
+            weekdayLabels={weekdayLabels}
           />
 
           {/* Flex days */}
           <div className="mt-3 pt-3 border-t border-slate-100">
-            <p className="text-xs text-slate-500 mb-2 font-medium">Fleksibilnost</p>
+            <p className="text-xs text-slate-500 mb-2 font-medium">{t('searchFields.flexibility')}</p>
             <div className="flex gap-1.5">
               {FLEX_OPTIONS.map((d) => (
                 <button
@@ -278,11 +293,11 @@ export function DateRangePicker({
                   className={cn(
                     'px-2.5 py-1 text-xs rounded-lg transition-all duration-150 font-medium',
                     flexDays === d
-                      ? /* BACKUP: 'bg-sky-500 text-white' */ 'bg-orange-500 text-white hover:bg-orange-600'
+                      ? 'bg-orange-500 text-white hover:bg-orange-600'
                       : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
                   )}
                 >
-                  {d === 0 ? 'Točno' : `±${d}`}
+                  {d === 0 ? t('searchFields.flexExact') : t('searchFields.flexDays', { days: d })}
                 </button>
               ))}
             </div>

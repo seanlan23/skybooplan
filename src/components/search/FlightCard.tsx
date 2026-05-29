@@ -7,10 +7,12 @@ import {
   formatLegDuration,
   getOfferDisplayLegs,
   type OfferLegDisplay,
+  type StopsLabels,
 } from '@/lib/flightOfferLegs'
 import { formatFlightPrice } from '@/lib/flightCurrency'
 import type { FlightOffer } from '@/types/flight.types'
 import { cn } from '@/lib/utils'
+import { useTranslations } from '@/i18n/LocaleProvider'
 
 export interface FlightCardProps {
   offer: FlightOffer
@@ -21,23 +23,23 @@ export interface FlightCardProps {
 }
 
 function Co2Banner({ offer }: { offer: FlightOffer }) {
+  const { t } = useTranslations()
   if (!offer.co2SavingsPercent) return null
 
   return (
     <div className="flex items-start gap-2 px-4 py-2.5 bg-[#e8f4fd] border-b border-[#d4e8f7] text-[13px] leading-snug text-[#0d4d7a]">
       <p className="flex-1">
-        Ta let izpušča približno{' '}
-        <span className="font-semibold">{offer.co2SavingsPercent} % manj CO₂e</span> kot povprečje
-        med temi rezultati iskanja
+        {t('flights.co2Emits')}{' '}
+        <span className="font-semibold">
+          {t('flights.co2LessThan', { percent: offer.co2SavingsPercent })}
+        </span>{' '}
+        {t('flights.co2AmongResults')}
         {offer.totalEmissionsKg != null && (
           <span className="text-[#3d6d8f]"> (≈ {offer.totalEmissionsKg} kg)</span>
         )}
         .
       </p>
-      <span
-        className="shrink-0 mt-0.5"
-        title="Ocena iz Duffel API; primerjava z drugimi karticami v tem iskanju."
-      >
+      <span className="shrink-0 mt-0.5" title={t('flights.co2Tooltip')}>
         <Info className="w-4 h-4 text-[#0770e3]" aria-hidden />
       </span>
     </div>
@@ -61,9 +63,17 @@ function AirlineColumn({ leg }: { leg: OfferLegDisplay }) {
   )
 }
 
-function SkyscannerLegRow({ leg, showDivider }: { leg: OfferLegDisplay; showDivider?: boolean }) {
+function SkyscannerLegRow({
+  leg,
+  showDivider,
+  stopsLabels,
+}: {
+  leg: OfferLegDisplay
+  showDivider?: boolean
+  stopsLabels: StopsLabels
+}) {
   const stopover = getLegStopoverCode(leg.segments)
-  const stopsText = formatStopsLine(leg.stops, stopover)
+  const stopsText = formatStopsLine(leg.stops, stopover, stopsLabels)
   const durationShort = formatLegDuration(leg.duration)
 
   return (
@@ -135,8 +145,15 @@ export function FlightCard({
   onSelect,
   className,
 }: FlightCardProps) {
+  const { t } = useTranslations()
   const legs = getOfferDisplayLegs(offer)
   const priceLabel = formatFlightPrice(offer.price, offer.currency)
+  const stopsLabels: StopsLabels = {
+    direct: t('flights.direct'),
+    oneStop: t('flights.oneStop'),
+    oneStopAt: (code) => t('flights.oneStopAt', { code }),
+    stopsMany: (count) => t('flights.stopsMany', { count }),
+  }
 
   return (
     <article
@@ -153,7 +170,12 @@ export function FlightCard({
       <div className="flex flex-col lg:flex-row lg:items-stretch">
         <div className="flex-1 min-w-0 flex flex-col justify-center">
           {legs.map((leg, i) => (
-            <SkyscannerLegRow key={leg.label} leg={leg} showDivider={i > 0} />
+            <SkyscannerLegRow
+              key={leg.label}
+              leg={leg}
+              showDivider={i > 0}
+              stopsLabels={stopsLabels}
+            />
           ))}
         </div>
 
@@ -163,7 +185,7 @@ export function FlightCard({
             <p className="text-2xl sm:text-[28px] font-bold text-slate-900 tabular-nums leading-none tracking-tight">
               {priceLabel}
             </p>
-            <p className="text-[11px] text-slate-400 mt-1 hidden sm:block">na odraslo osebo</p>
+            <p className="text-[11px] text-slate-400 mt-1 hidden sm:block">{t('flights.perAdult')}</p>
           </div>
           <button
             type="button"
@@ -174,7 +196,7 @@ export function FlightCard({
               'bg-sky-600 hover:bg-sky-700 active:bg-sky-800 transition-colors'
             )}
           >
-            Izberi
+            {t('flights.select')}
             <ArrowRight className="w-4 h-4" aria-hidden />
           </button>
         </div>

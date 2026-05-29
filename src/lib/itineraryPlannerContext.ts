@@ -1,5 +1,7 @@
+import { getAiResponseLanguage } from '@/lib/localeAiLanguage'
+import type { Locale } from '@/i18n/config'
 import { differenceInCalendarDays, format, startOfDay } from 'date-fns'
-import { sl } from 'date-fns/locale'
+import { getDateFnsLocale } from '@/i18n/localeDateFns'
 import { formatBookingDestinationLabel } from '@/lib/bookingDestinations'
 import type { ItineraryPlannerInput } from '@/lib/itineraryPrompt'
 import type { Airport } from '@/types/flight.types'
@@ -8,9 +10,9 @@ import type { SearchMode } from '@/store/useSearchStore'
 import type { BookingDestination } from '@/types/booking.types'
 import type { HotelsOnlyContext } from '@/store/usePlannerStore'
 
-function formatDateLabel(date: Date | null | undefined): string {
+function formatDateLabel(date: Date | null | undefined, locale: Locale = 'sl'): string {
   if (!date || Number.isNaN(date.getTime())) return 'ni določeno'
-  return format(date, 'd. MMM yyyy', { locale: sl })
+  return format(date, 'd. MMM yyyy', { locale: getDateFnsLocale(locale) })
 }
 
 function resolveDestination(params: {
@@ -167,6 +169,7 @@ export function buildItineraryPlannerInput(params: {
   travelType?: string
   dailyBudget?: string
   specialRequests?: string
+  locale?: Locale
 }): ItineraryPlannerInput {
   const travelNights =
     params.selectedFlight?.travelNights ??
@@ -192,13 +195,15 @@ export function buildItineraryPlannerInput(params: {
       params.departureDate ??
         (params.selectedFlight?.outboundDepartureAt
           ? new Date(params.selectedFlight.outboundDepartureAt)
-          : null)
+          : null),
+      params.locale
     ),
     checkOutDate: formatDateLabel(
       params.returnDate ??
         (params.selectedFlight?.returnDepartureAt
           ? new Date(params.selectedFlight.returnDepartureAt)
-          : null)
+          : null),
+      params.locale
     ),
     passengerCount: Math.max(1, params.adults + params.children),
     passengerType: resolvePassengerType(
@@ -210,5 +215,7 @@ export function buildItineraryPlannerInput(params: {
     dailyBudget: params.dailyBudget ?? 'optimizirano',
     specialRequests: params.specialRequests ?? 'brez',
     travelNights,
+    locale: params.locale,
+    responseLanguage: getAiResponseLanguage(params.locale),
   }
 }

@@ -20,6 +20,7 @@ import { cn } from '@/lib/utils'
 import type { Accommodation } from '@/types/accommodation.types'
 import type { ItineraryDay } from '@/types/itinerary.types'
 import { DayCardHotelFilters } from './DayCardHotelFilters'
+import { useTranslations } from '@/i18n/LocaleProvider'
 
 const SKELETON_COUNT = 5
 
@@ -28,6 +29,7 @@ interface DayCardHotelsProps {
 }
 
 export function DayCardHotels({ day }: DayCardHotelsProps) {
+  const { t } = useTranslations()
   const itinerary = usePlannerStore((s) => s.itinerary)
   const { departureDate } = useSearchStore()
   const selectedFlight = useSelectedFlightStore((s) => s.selectedFlight)
@@ -82,11 +84,11 @@ export function DayCardHotels({ day }: DayCardHotelsProps) {
   return (
     <div className="mt-4 pt-4 border-t border-slate-100">
       <h4 className="text-sm font-bold text-slate-800 mb-2">
-        🏨 Hoteli v {segment.cityLabel}
+        🏨 {t('hotels.inCity', { city: segment.cityLabel })}
       </h4>
 
       {showSkeleton ? (
-        <div className={scrollRowClass} aria-busy="true" aria-label="Nalagam hotele">
+        <div className={scrollRowClass} aria-busy="true" aria-label={t('hotels.loadingHotels')}>
           {Array.from({ length: SKELETON_COUNT }).map((_, i) => (
             <RouteStayCardSkeleton key={i} className="snap-start" />
           ))}
@@ -105,13 +107,13 @@ export function DayCardHotels({ day }: DayCardHotelsProps) {
 
       {!showSkeleton && !isLoading && prepared.length === 0 && !error ? (
         <p className="text-xs text-slate-500 rounded-lg border border-dashed border-slate-200 bg-slate-50/80 px-3 py-3 text-center">
-          Ni hotelov za te datume v {segment.cityLabel}.
+          {t('hotels.noHotelsForDates', { city: segment.cityLabel })}
         </p>
       ) : null}
 
       {!showSkeleton && prepared.length > 0 && hotels.length === 0 ? (
         <p className="text-xs text-slate-500 rounded-lg border border-dashed border-slate-200 bg-slate-50/80 px-3 py-2 text-center mb-2">
-          Noben hotel ne ustreza izbrani lokaciji — poskusi drug filter.
+          {t('hotels.filterNoMatch')}
         </p>
       ) : null}
 

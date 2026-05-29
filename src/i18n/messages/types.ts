@@ -4,6 +4,8 @@ export type Messages = {
     loading: string
     generating: string
     generatingPlan: string
+    confirm: string
+    notSet: string
   }
   nav: {
     flights: string
@@ -33,6 +35,9 @@ export type Messages = {
     modeAiPlanner: string
     skyscanner: string
     searchHotels: string
+    searchFlights: string
+    oneWay: string
+    returnTrip: string
   }
   loading: {
     searchingFlights: string
@@ -84,4 +89,126 @@ export type Messages = {
     nightsFew: string
     nightsMany: string
   }
+  searchFields: {
+    from: string
+    to: string
+    depart: string
+    return: string
+    departureDate: string
+    travellers: string
+    guests: string
+    economy: string
+    premiumEconomy: string
+    business: string
+    firstClass: string
+    addAirport: string
+    whereToFly: string
+    cityOrAirport: string
+    originLabel: string
+    destinationLabel: string
+    passengersShort: string
+    roomsOne: string
+    roomsTwo: string
+    roomsFew: string
+    roomsMany: string
+    adults: string
+    children: string
+    rooms: string
+    ageAdult: string
+    ageChild: string
+    cabinClass: string
+    paxDialogFlights: string
+    paxDialogHotels: string
+    flexExact: string
+    flexDays: string
+    addDate: string
+    dateFrom: string
+    dateTo: string
+    flexibility: string
+  }
+  flights: {
+    select: string
+    perAdult: string
+    travelerOne: string
+    travelersMany: string
+    co2Emits: string
+    co2LessThan: string
+    co2AmongResults: string
+    co2Tooltip: string
+    selectForAi: string
+    selectedForAi: string
+    sortBest: string
+    sortCheapest: string
+    sortFastest: string
+    sortFlightsAria: string
+    fromPrice: string
+    mockPreview: string
+    resultsCount: string
+    sortedBy: string
+    sortBestLabel: string
+    sortCheapestLabel: string
+    sortFastestLabel: string
+    noResults: string
+    resultsTitle: string
+    openSkyscanner: string
+    testModeTitle: string
+    testModeBody: string
+    showMore: string
+    showLess: string
+    showMoreFlights: string
+    direct: string
+    oneStop: string
+    oneStopAt: string
+    stopsMany: string
+    outbound: string
+    returnLeg: string
+    flightUnitOne: string
+    flightUnitTwo: string
+    flightUnitMany: string
+  }
+  dayCard: {
+    morning: string
+    afternoon: string
+    evening: string
+    travelHack: string
+    suggestionsForDay: string
+    transport: string
+    food: string
+    dailyBudget: string
+  }
+  hotels: {
+    inCity: string
+    sortBy: string
+    priceAsc: string
+    priceDesc: string
+    ratingAsc: string
+    ratingDesc: string
+    location: string
+    all: string
+    center: string
+    beach: string
+    airport: string
+    perNight: string
+    view: string
+    book: string
+    loadingHotels: string
+    noHotelsForDates: string
+    filterNoMatch: string
+    selectDestination: string
+  }
+  footer: {
+    copyright: string
+    privacy: string
+    terms: string
+    contact: string
+  }
+  errors: {
+    pdfExportFailed: string
+    selectDestinationDates: string
+    selectTravelTempo: string
+  }
+}
+
+export type DeepPartialMessages = {
+  [K in keyof Messages]?: Partial<Messages[K]>
 }

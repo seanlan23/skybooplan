@@ -6,6 +6,7 @@ import { FlightCard } from './FlightCard'
 import { useSearchStore } from '@/store/useSearchStore'
 import type { FlightOffer } from '@/types/flight.types'
 import { cn } from '@/lib/utils'
+import { useTranslations } from '@/i18n/LocaleProvider'
 
 interface FlightOfferRowProps {
   offer: FlightOffer
@@ -14,24 +15,24 @@ interface FlightOfferRowProps {
   onSelectForAI: (e: MouseEvent) => void
 }
 
-function formatTravelerLabel(total: number): string {
-  if (total === 1) return '1 traveler'
-  return `${total} travelers`
-}
-
 export function FlightOfferRow({
   offer,
   selectedForAI,
   onSelectOffer,
   onSelectForAI,
 }: FlightOfferRowProps) {
+  const { t } = useTranslations()
   const totalPassengers = useSearchStore((s) => s.totalPassengers)
+  const travelerLabel =
+    totalPassengers === 1
+      ? t('flights.travelerOne')
+      : t('flights.travelersMany', { count: totalPassengers })
 
   return (
     <div className="shrink-0 space-y-0">
       <FlightCard
         offer={offer}
-        travelerLabel={formatTravelerLabel(totalPassengers)}
+        travelerLabel={travelerLabel}
         selected={selectedForAI}
         onSelect={onSelectOffer}
         className={cn(selectedForAI && 'rounded-b-none border-b-0 shadow-md')}
@@ -55,7 +56,7 @@ export function FlightOfferRow({
           )}
         >
           <Sparkles className="w-3.5 h-3.5" />
-          {selectedForAI ? 'Izbrano za AI' : 'Izberi za AI načrt'}
+          {selectedForAI ? t('flights.selectedForAi') : t('flights.selectForAi')}
         </button>
       </div>
     </div>

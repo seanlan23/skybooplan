@@ -1,4 +1,5 @@
 import type { Messages } from './messages/types'
+import { en } from './messages/en'
 
 function getNested(tree: Messages, path: string): string | undefined {
   const parts = path.split('.')
@@ -28,6 +29,6 @@ export function translate(
   key: string,
   params?: Record<string, string | number>
 ): string {
-  const raw = getNested(tree, key) ?? key
+  const raw = getNested(tree, key) ?? getNested(en, key) ?? key
   return interpolate(raw, params)
 }

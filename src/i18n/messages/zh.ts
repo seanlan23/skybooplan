@@ -1,6 +1,6 @@
-import type { Messages } from './types'
+import type { DeepPartialMessages } from './types'
 
-export const zh: Messages = {
+export const zh: DeepPartialMessages = {
   common: {
     help: '帮助',
     loading: '加载中...',
