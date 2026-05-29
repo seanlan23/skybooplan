@@ -157,6 +157,7 @@ export function HotelDetailModal({ hotel, open, onClose }: HotelDetailModalProps
               src={currentPhoto}
               alt={hotel.name}
               className="w-full h-full object-cover"
+              loading="lazy"
               referrerPolicy="no-referrer"
             />
             {galleryLoading && (
@@ -237,6 +238,7 @@ export function HotelDetailModal({ hotel, open, onClose }: HotelDetailModalProps
                       src={url}
                       alt={`${hotel.name} — fotografija ${i + 1}`}
                       className="w-full h-full object-cover"
+                      loading="lazy"
                       referrerPolicy="no-referrer"
                     />
                   </button>

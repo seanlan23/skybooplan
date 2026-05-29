@@ -331,6 +331,8 @@ export async function searchBookingHotels(params: {
   adults: number
   children?: number
   rooms?: number
+  /** Ne kliči getHotelDetails za vsak hotel (hitrejši seznam na karticah) */
+  skipGallery?: boolean
 }): Promise<{ results: Accommodation[]; error?: string }> {
   if (!RAPIDAPI_KEY) {
     return { results: [], error: 'RAPIDAPI_KEY ni nastavljen.' }
@@ -410,7 +412,7 @@ export async function searchBookingHotels(params: {
         h.url ?? h.hotel_url ?? pp.url ?? pp.booking_url ?? ''
       ).trim()
 
-      if (hotelId && index < GALLERY_FETCH_LIMIT) {
+      if (!params.skipGallery && hotelId && index < GALLERY_FETCH_LIMIT) {
         const detailsPhotos = await fetchBookingHotelGallery(
           hotelId,
           params.checkIn,

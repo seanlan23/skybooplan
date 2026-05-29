@@ -60,6 +60,7 @@ export const ja: Messages = {
     hotelsOnRoute: 'ルート沿いのおすすめ宿泊',
     hotelsOnRouteHint: '選択したフライトとAIプランに基づくルート沿いのホテル',
     exportPdf: 'PDFをダウンロード',
+    exportPdfGenerating: 'Generating PDF…',
     exportGoogleDocs: 'Google ドキュメントに保存',
     exportGroupAria: 'プランをエクスポート',
     sectionAria: 'AIプランとフライト結果',

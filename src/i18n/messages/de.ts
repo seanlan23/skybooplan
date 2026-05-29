@@ -60,6 +60,7 @@ export const de: Messages = {
     hotelsOnRoute: 'Empfohlene Unterkünfte entlang der Route',
     hotelsOnRouteHint: 'Hotels entlang Ihrer Route basierend auf dem gewählten Flug und KI-Plan',
     exportPdf: 'PDF herunterladen',
+    exportPdfGenerating: 'Generating PDF…',
     exportGoogleDocs: 'In Google Docs speichern',
     exportGroupAria: 'Plan exportieren',
     sectionAria: 'KI-Plan und Flugergebnisse',

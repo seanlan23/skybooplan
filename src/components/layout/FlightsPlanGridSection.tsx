@@ -1,9 +1,12 @@
 'use client'
 
 import { useMemo, useState } from 'react'
+import { parseISO, startOfDay } from 'date-fns'
 import { useSelectedFlightStore } from '@/store/useSelectedFlightStore'
 import { usePlannerStore } from '@/store/usePlannerStore'
-import { ArrowLeft, FileDown, FileText } from 'lucide-react'
+import { useSearchStore } from '@/store/useSearchStore'
+import { useItineraryHotelsStore } from '@/store/useItineraryHotelsStore'
+import { ArrowLeft, FileDown, FileText, Loader2 } from 'lucide-react'
 import AIPlanner from '@/components/planner/AIPlanner'
 import HotelAggregator from '@/components/accommodations/HotelAggregator'
 import { FlightResults } from '@/components/search/FlightResults'
@@ -11,6 +14,10 @@ import { MapViewDynamic } from '@/components/map/MapViewDynamic'
 import { useFlightSearch } from '@/hooks/useFlightSearch'
 import { useSkyscannerRedirect } from '@/hooks/useSkyscannerRedirect'
 import { useFlightResultsColumnHeight } from '@/hooks/useFlightResultsColumnHeight'
+import {
+  buildItineraryExportPayload,
+  sendItineraryToMakePdfWebhook,
+} from '@/lib/itineraryPdfExport'
 import { CONTENT_CONTAINER, PLANNER_RESULTS_GRID } from '@/lib/layoutConstants'
 import { cn } from '@/lib/utils'
 import { useTranslations } from '@/i18n/LocaleProvider'
@@ -183,42 +190,107 @@ export function FlightsPlanGridSection() {
 
 function PlannerExportActions() {
   const { t } = useTranslations()
+  const search = useSearchStore()
+  const itinerary = usePlannerStore((s) => s.itinerary)
+  const tripSummary = usePlannerStore((s) => s.tripSummary)
+  const specialRequestsText = usePlannerStore((s) => s.specialRequestsText)
+  const travelTempo = usePlannerStore((s) => s.travelTempo)
+  const hotelsOnlyContext = usePlannerStore((s) => s.hotelsOnlyContext)
+  const selectedFlight = useSelectedFlightStore((s) => s.selectedFlight)
+  const hotelsBySegment = useItineraryHotelsStore((s) => s.bySegment)
+  const { departureDate } = useSearchStore()
+
+  const [isPdfExporting, setIsPdfExporting] = useState(false)
+  const [pdfError, setPdfError] = useState<string | null>(null)
+
+  const tripStart = useMemo(() => {
+    if (selectedFlight?.outboundArrivalAt) {
+      return startOfDay(parseISO(selectedFlight.outboundArrivalAt))
+    }
+    if (hotelsOnlyContext?.arrivalAt) {
+      return startOfDay(parseISO(hotelsOnlyContext.arrivalAt))
+    }
+    if (departureDate) return startOfDay(departureDate)
+    return startOfDay(new Date())
+  }, [selectedFlight, hotelsOnlyContext, departureDate])
+
+  const canExportPdf = itinerary.length > 0 && !isPdfExporting
+
+  async function handleExportPdf() {
+    if (!canExportPdf) return
+
+    setPdfError(null)
+    setIsPdfExporting(true)
+
+    const itineraryData = buildItineraryExportPayload({
+      search,
+      selectedFlight,
+      itinerary,
+      tripSummary,
+      hotelsBySegmentKey: hotelsBySegment,
+      tripStart,
+      specialRequestsText,
+      travelTempo: travelTempo ?? undefined,
+    })
+
+    try {
+      await sendItineraryToMakePdfWebhook(itineraryData)
+    } catch (err) {
+      console.error('[pdf export]', err)
+      setPdfError('PDF trenutno ni bilo mogoče generirati. Poskusi znova.')
+    } finally {
+      setIsPdfExporting(false)
+    }
+  }
+
   return (
     <div
-      className="shrink-0 border-t border-slate-100 bg-slate-50/60 px-3 py-3 flex flex-col sm:flex-row gap-2"
+      className="shrink-0 border-t border-slate-100 bg-slate-50/60 px-3 py-3 flex flex-col gap-2"
       role="group"
       aria-label={t('planner.exportGroupAria')}
     >
-      <button
-        type="button"
-        onClick={() => {
-          /* TODO: PDF export */
-        }}
-        className={cn(
-          'inline-flex flex-1 items-center justify-center gap-2 rounded-xl border px-4 py-2.5',
-          'text-sm font-semibold transition-all duration-200',
-          'border-red-200/80 bg-white text-red-700 hover:bg-red-50 hover:border-red-300',
-          'shadow-sm'
-        )}
-      >
-        <FileDown className="w-4 h-4 shrink-0" aria-hidden />
-        {t('planner.exportPdf')}
-      </button>
-      <button
-        type="button"
-        onClick={() => {
-          /* TODO: Google Docs export */
-        }}
-        className={cn(
-          'inline-flex flex-1 items-center justify-center gap-2 rounded-xl border px-4 py-2.5',
-          'text-sm font-semibold transition-all duration-200',
-          'border-sky-200/80 bg-white text-sky-800 hover:bg-sky-50 hover:border-sky-400',
-          'shadow-sm'
-        )}
-      >
-        <FileText className="w-4 h-4 shrink-0" aria-hidden />
-        {t('planner.exportGoogleDocs')}
-      </button>
+      {pdfError ? (
+        <p className="text-xs text-red-700 bg-red-50 border border-red-100 rounded-lg px-3 py-2">
+          {pdfError}
+        </p>
+      ) : null}
+
+      <div className="flex flex-col sm:flex-row gap-2">
+        <button
+          type="button"
+          onClick={() => void handleExportPdf()}
+          disabled={!canExportPdf}
+          aria-busy={isPdfExporting}
+          className={cn(
+            'inline-flex flex-1 items-center justify-center gap-2 rounded-xl border px-4 py-2.5',
+            'text-sm font-semibold transition-all duration-200',
+            'border-red-200/80 bg-white text-red-700 hover:bg-red-50 hover:border-red-300',
+            'shadow-sm disabled:opacity-60 disabled:cursor-not-allowed disabled:hover:bg-white'
+          )}
+        >
+          {isPdfExporting ? (
+            <Loader2 className="w-4 h-4 shrink-0 animate-spin" aria-hidden />
+          ) : (
+            <FileDown className="w-4 h-4 shrink-0" aria-hidden />
+          )}
+          {isPdfExporting ? t('planner.exportPdfGenerating') : t('planner.exportPdf')}
+        </button>
+        <button
+          type="button"
+          onClick={() => {
+            /* TODO: Google Docs export */
+          }}
+          className={cn(
+            'inline-flex flex-1 items-center justify-center gap-2 rounded-xl border px-4 py-2.5',
+            'text-sm font-semibold transition-all duration-200',
+            'border-sky-200/80 bg-white text-sky-800 hover:bg-sky-50 hover:border-sky-400',
+            'shadow-sm'
+          )}
+        >
+          <FileText className="w-4 h-4 shrink-0" aria-hidden />
+          {t('planner.exportGoogleDocs')}
+        </button>
+      </div>
     </div>
   )
 }

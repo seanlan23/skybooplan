@@ -36,6 +36,7 @@ import { normalizeItineraryDays, syncItineraryDayLabels } from '@/lib/normalizeI
 import { normalizeTripSummary } from '@/lib/itineraryPrompt'
 import type { ItineraryDay, ItineraryTripSummary } from '@/types/itinerary.types'
 import { useItineraryHotelsStore } from '@/store/useItineraryHotelsStore'
+import { resetItineraryHotelCache } from '@/hooks/useItineraryCityHotels'
 
 type StreamCallbacks = {
   onDone: (
@@ -212,6 +213,7 @@ export function useAIItinerary() {
     setTripSummary(null)
     setItineraryCompleteness(null)
     useItineraryHotelsStore.getState().clearAll()
+    resetItineraryHotelCache()
 
     const alignDays = (raw: ItineraryDay[]) =>
       syncItineraryDayLabels(
@@ -302,6 +304,7 @@ export function useAIItinerary() {
     setTripSummary(null)
     setItineraryCompleteness(null)
     useItineraryHotelsStore.getState().clearAll()
+    resetItineraryHotelCache()
 
     try {
       const res = await fetch('/api/ai/itinerary', {
@@ -386,6 +389,7 @@ export function useAIItinerary() {
     setTripSummary(null)
     setItineraryCompleteness(null)
     useItineraryHotelsStore.getState().clearAll()
+    resetItineraryHotelCache()
 
     try {
       const body: Record<string, unknown> = {

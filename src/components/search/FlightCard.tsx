@@ -8,6 +8,7 @@ import {
   getOfferDisplayLegs,
   type OfferLegDisplay,
 } from '@/lib/flightOfferLegs'
+import { formatFlightPrice } from '@/lib/flightCurrency'
 import type { FlightOffer } from '@/types/flight.types'
 import { cn } from '@/lib/utils'
 
@@ -135,8 +136,7 @@ export function FlightCard({
   className,
 }: FlightCardProps) {
   const legs = getOfferDisplayLegs(offer)
-  const priceLabel =
-    offer.currency === 'EUR' || offer.currency === '€' ? `${offer.price} €` : `${offer.price} ${offer.currency}`
+  const priceLabel = formatFlightPrice(offer.price, offer.currency)
 
   return (
     <article

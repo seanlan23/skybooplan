@@ -1,4 +1,5 @@
 import { formatMinutesHuman, isoDurationToMinutes } from '@/lib/isoDuration'
+import { formatFlightPrice } from '@/lib/flightCurrency'
 import type { FlightOffer } from '@/types/flight.types'
 
 export type FlightSortMode = 'best' | 'cheapest' | 'fastest'
@@ -60,7 +61,7 @@ export function sortFlightOffers(
 }
 
 function priceLabel(offer: FlightOffer): string {
-  return `${offer.price} €`
+  return formatFlightPrice(offer.price, offer.currency)
 }
 
 /** Cene za zavihke Best / Cheapest / Fastest (različni leti po razvrstitvi). */

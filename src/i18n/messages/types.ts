@@ -57,6 +57,7 @@ export type Messages = {
     hotelsOnRoute: string
     hotelsOnRouteHint: string
     exportPdf: string
+    exportPdfGenerating: string
     exportGoogleDocs: string
     exportGroupAria: string
     sectionAria: string

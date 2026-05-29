@@ -60,6 +60,7 @@ export const it: Messages = {
     hotelsOnRoute: 'Alloggi consigliati lungo il percorso',
     hotelsOnRouteHint: 'Hotel lungo il percorso in base al volo selezionato e al piano IA',
     exportPdf: 'Scarica PDF',
+    exportPdfGenerating: 'Generating PDF…',
     exportGoogleDocs: 'Salva in Google Docs',
     exportGroupAria: 'Esporta piano',
     sectionAria: 'Piano IA e risultati voli',

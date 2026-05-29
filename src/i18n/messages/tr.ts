@@ -60,6 +60,7 @@ export const tr: Messages = {
     hotelsOnRoute: 'Rota üzerinde önerilen konaklamalar',
     hotelsOnRouteHint: 'Seçilen uçuş ve YZ planına göre rotanızdaki oteller',
     exportPdf: 'PDF indir',
+    exportPdfGenerating: 'Generating PDF…',
     exportGoogleDocs: 'Google Docs’a kaydet',
     exportGroupAria: 'Planı dışa aktar',
     sectionAria: 'YZ planı ve uçuş sonuçları',

@@ -2,20 +2,27 @@
 
 import { useEffect, useMemo, useRef } from 'react'
 import { parseISO, startOfDay } from 'date-fns'
-import { buildItineraryCitySegments } from '@/lib/itineraryCitySegments'
+import { formatCalendarDate } from '@/lib/calendarDate'
 import { fetchHotelsForStay } from '@/lib/fetchHotelsForStay'
+import {
+  buildHotelFetchCacheKey,
+  clearHotelFetchCache,
+  getHotelFetchCache,
+  setHotelFetchCache,
+} from '@/lib/hotelFetchCache'
+import { buildItineraryCitySegments } from '@/lib/itineraryCitySegments'
 import { useItineraryHotelsStore } from '@/store/useItineraryHotelsStore'
 import { usePlannerStore } from '@/store/usePlannerStore'
 import { useSearchStore } from '@/store/useSearchStore'
 import { useSelectedFlightStore } from '@/store/useSelectedFlightStore'
 
-/** Naloži hotele za vsak unikaten mestni blok v AI itinerarju. */
+/** Naloži hotele za vsak unikaten mestni blok v AI itinerarju (vzporedno + cache). */
 export function useItineraryCityHotels() {
   const itinerary = usePlannerStore((s) => s.itinerary)
   const { adults, children, rooms, departureDate } = useSearchStore()
   const selectedFlight = useSelectedFlightStore((s) => s.selectedFlight)
   const hotelsOnlyContext = usePlannerStore((s) => s.hotelsOnlyContext)
-  const setSegmentLoading = useItineraryHotelsStore((s) => s.setSegmentLoading)
+  const setSegmentsLoading = useItineraryHotelsStore((s) => s.setSegmentsLoading)
   const setSegmentHotels = useItineraryHotelsStore((s) => s.setSegmentHotels)
   const clearAll = useItineraryHotelsStore((s) => s.clearAll)
 
@@ -36,10 +43,7 @@ export function useItineraryCityHotels() {
   )
 
   const segmentsKey = useMemo(
-    () =>
-      segments
-        .map((s) => s.segmentKey)
-        .join(';'),
+    () => segments.map((s) => s.segmentKey).join(';'),
     [segments]
   )
 
@@ -52,32 +56,58 @@ export function useItineraryCityHotels() {
     }
 
     const gen = ++fetchGenRef.current
-    const controllers: AbortController[] = []
+    const controller = new AbortController()
+    const arrivalAt = selectedFlight?.outboundArrivalAt
+
+    const pendingKeys: string[] = []
+    const fetchTasks: Promise<void>[] = []
 
     for (const segment of segments) {
-      setSegmentLoading(segment.segmentKey)
-      const ac = new AbortController()
-      controllers.push(ac)
-
-      void fetchHotelsForStay(
-        {
-          location: segment.location,
-          checkIn: segment.checkIn,
-          checkOut: segment.checkOut,
-          adults,
-          children,
-          rooms,
-          arrivalAt: selectedFlight?.outboundArrivalAt,
-        },
-        ac.signal
-      ).then(({ hotels, error }) => {
-        if (fetchGenRef.current !== gen) return
-        setSegmentHotels(segment.segmentKey, hotels, error)
+      const cacheKey = buildHotelFetchCacheKey({
+        location: segment.location,
+        checkIn: formatCalendarDate(segment.checkIn),
+        checkOut: formatCalendarDate(segment.checkOut),
+        adults,
+        children,
+        rooms,
       })
+
+      const cached = getHotelFetchCache(cacheKey)
+      if (cached) {
+        setSegmentHotels(segment.segmentKey, cached.hotels, cached.error)
+        continue
+      }
+
+      pendingKeys.push(segment.segmentKey)
+
+      fetchTasks.push(
+        fetchHotelsForStay(
+          {
+            location: segment.location,
+            checkIn: segment.checkIn,
+            checkOut: segment.checkOut,
+            adults,
+            children,
+            rooms,
+            arrivalAt,
+          },
+          controller.signal
+        ).then(({ hotels, error }) => {
+          if (fetchGenRef.current !== gen) return
+          setHotelFetchCache(cacheKey, { hotels, error })
+          setSegmentHotels(segment.segmentKey, hotels, error)
+        })
+      )
     }
 
+    if (pendingKeys.length > 0) {
+      setSegmentsLoading(pendingKeys)
+    }
+
+    void Promise.all(fetchTasks)
+
     return () => {
-      controllers.forEach((c) => c.abort())
+      controller.abort()
     }
   }, [
     segmentsKey,
@@ -86,8 +116,13 @@ export function useItineraryCityHotels() {
     children,
     rooms,
     selectedFlight?.outboundArrivalAt,
-    setSegmentLoading,
+    setSegmentsLoading,
     setSegmentHotels,
     clearAll,
   ])
+}
+
+/** Počisti client cache ob resetu planerja (npr. nov AI načrt). */
+export function resetItineraryHotelCache() {
+  clearHotelFetchCache()
 }

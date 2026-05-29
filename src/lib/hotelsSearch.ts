@@ -19,6 +19,8 @@ export interface HotelsSearchBody {
   guests?: number
   /** ISO čas pristanka (Duffel) — check-in se poravna na ta koledarski dan */
   arrivalAt?: string
+  /** Hitrejši seznam — brez dodatnih gallery klicov na Booking API */
+  lite?: boolean
 }
 
 export async function runHotelsSearch(body: HotelsSearchBody) {
@@ -57,7 +59,7 @@ export async function runHotelsSearch(body: HotelsSearchBody) {
   const checkInKey = formatCalendarDate(checkIn)
   const checkOutKey = formatCalendarDate(checkOut)
 
-  const cacheKey = `booking:v11:${bookingCity}:${checkInKey}:${checkOutKey}:${adults}:${children}:${rooms}`
+  const cacheKey = `booking:v11:${bookingCity}:${checkInKey}:${checkOutKey}:${adults}:${children}:${rooms}${body.lite ? ':lite' : ''}`
   const cached = await getCached<Accommodation[]>(cacheKey)
   if (cached?.length) {
     return NextResponse.json({
@@ -76,6 +78,7 @@ export async function runHotelsSearch(body: HotelsSearchBody) {
     adults,
     children,
     rooms,
+    skipGallery: body.lite === true,
   })
 
   if (results.length > 0) {

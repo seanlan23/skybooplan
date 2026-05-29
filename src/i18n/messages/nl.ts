@@ -60,6 +60,7 @@ export const nl: Messages = {
     hotelsOnRoute: 'Aanbevolen verblijven langs de route',
     hotelsOnRouteHint: 'Hotels langs uw route op basis van de gekozen vlucht en het AI-plan',
     exportPdf: 'PDF downloaden',
+    exportPdfGenerating: 'Generating PDF…',
     exportGoogleDocs: 'Opslaan in Google Docs',
     exportGroupAria: 'Plan exporteren',
     sectionAria: 'AI-plan en vluchtresultaten',

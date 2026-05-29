@@ -30,6 +30,8 @@ export async function fetchHotelsForStay(
         children: params.children,
         rooms: params.rooms,
         arrivalAt: params.arrivalAt,
+        /** List cards only need search thumbnails — skip 14× gallery API calls per city */
+        lite: true,
       }),
       signal,
     })

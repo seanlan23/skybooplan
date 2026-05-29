@@ -9,6 +9,7 @@ export interface SegmentHotelState {
 
 interface ItineraryHotelsState {
   bySegment: Record<string, SegmentHotelState>
+  setSegmentsLoading: (segmentKeys: string[]) => void
   setSegmentLoading: (segmentKey: string) => void
   setSegmentHotels: (
     segmentKey: string,
@@ -25,6 +26,19 @@ const emptySegment = (): SegmentHotelState => ({
 
 export const useItineraryHotelsStore = create<ItineraryHotelsState>((set) => ({
   bySegment: {},
+
+  setSegmentsLoading: (segmentKeys) =>
+    set((s) => {
+      const next = { ...s.bySegment }
+      for (const segmentKey of segmentKeys) {
+        next[segmentKey] = {
+          ...(next[segmentKey] ?? emptySegment()),
+          isLoading: true,
+          error: undefined,
+        }
+      }
+      return { bySegment: next }
+    }),
 
   setSegmentLoading: (segmentKey) =>
     set((s) => ({

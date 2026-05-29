@@ -60,6 +60,7 @@ export const ar: Messages = {
     hotelsOnRoute: 'إقامات موصى بها على المسار',
     hotelsOnRouteHint: 'فنادق على مسارك وفق الرحلة المختارة وخطة الذكاء الاصطناعي',
     exportPdf: 'تنزيل PDF',
+    exportPdfGenerating: 'Generating PDF…',
     exportGoogleDocs: 'حفظ في Google Docs',
     exportGroupAria: 'تصدير الخطة',
     sectionAria: 'خطة الذكاء الاصطناعي ونتائج الرحلات',

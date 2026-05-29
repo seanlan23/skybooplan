@@ -60,6 +60,7 @@ export const ru: Messages = {
     hotelsOnRoute: 'Рекомендуемое жильё на маршруте',
     hotelsOnRouteHint: 'Отели на маршруте по выбранному рейсу и плану ИИ',
     exportPdf: 'Скачать PDF',
+    exportPdfGenerating: 'Generating PDF…',
     exportGoogleDocs: 'Сохранить в Google Docs',
     exportGroupAria: 'Экспорт плана',
     sectionAria: 'План ИИ и результаты рейсов',

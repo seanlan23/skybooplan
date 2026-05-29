@@ -1,4 +1,5 @@
 import { createAllAirportsOption, organizeAirportSuggestions } from '@/lib/airportSuggestions'
+import { normalizeFlightOfferPrice } from '@/lib/flightCurrency'
 import { formatIsoDurationHuman, isoDurationToMinutes } from '@/lib/isoDuration'
 import { stripAirportFromLocation } from '@/lib/bookingLocation'
 import type { Airport, FlightOffer, FlightSegment } from '@/types/flight.types'
@@ -161,6 +162,7 @@ type DuffelOffer = {
   total_amount: string
   total_currency: string
   total_emissions_kg?: string | null
+  passengers?: { type?: string }[]
   owner?: { name?: string; logo_symbol_url?: string }
   slices?: DuffelSlice[]
 }
@@ -215,14 +217,25 @@ function mapDuffelOffer(
   const returnMinutes =
     inSegs.length > 0 ? parseIsoDurationMinutes(inbound?.duration) : 0
 
+  const passengerCount = Math.max(
+    1,
+    offer.passengers?.length ?? params.adults + (params.children ?? 0)
+  )
+  const totalAmount = parseFloat(offer.total_amount)
+  const priced = normalizeFlightOfferPrice(
+    totalAmount,
+    offer.total_currency,
+    passengerCount
+  )
+
   return {
     id: offer.id,
     origin: first?.origin?.iata_code ?? params.origin,
     destination: lastOut?.destination?.iata_code ?? params.destination,
     departureDate: params.departDate,
     returnDate: params.returnDate,
-    price: Math.round(parseFloat(offer.total_amount)),
-    currency: offer.total_currency,
+    price: priced.displayAmount,
+    currency: priced.displayCurrency,
     airline: offer.owner?.name ?? carrier?.name ?? 'Unknown',
     airlineLogo: carrier?.logo_symbol_url ?? offer.owner?.logo_symbol_url,
     duration: formatIsoDuration(outbound?.duration),
@@ -283,6 +296,8 @@ export async function searchFlightsDuffel(params: DuffelSearchParams): Promise<F
           slices,
           passengers,
           cabin_class: CABIN_MAP[params.cabinClass] ?? 'economy',
+          // Note: Duffel has no currency field here — total_currency follows your
+          // organisation billing currency (set EUR in Duffel dashboard).
         },
       },
     }

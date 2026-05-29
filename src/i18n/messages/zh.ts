@@ -60,6 +60,7 @@ export const zh: Messages = {
     hotelsOnRoute: '沿途推荐住宿',
     hotelsOnRouteHint: '根据所选航班与 AI 规划推荐的沿途酒店',
     exportPdf: '下载 PDF',
+    exportPdfGenerating: 'Generating PDF…',
     exportGoogleDocs: '保存到 Google 文档',
     exportGroupAria: '导出规划',
     sectionAria: 'AI 规划与航班结果',

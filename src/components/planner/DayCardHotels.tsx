@@ -3,8 +3,8 @@
 import { useMemo, useState } from 'react'
 import { parseISO, startOfDay } from 'date-fns'
 import { RouteStayCard } from '@/components/accommodations/RouteStayCard'
+import { RouteStayCardSkeleton } from '@/components/accommodations/RouteStayCardSkeleton'
 import { HotelDetailModal } from '@/components/accommodations/HotelDetailModal'
-import { SkeletonCard } from '@/components/ui/Skeleton'
 import { findSegmentForDay } from '@/lib/itineraryCitySegments'
 import {
   applyRouteStayFilters,
@@ -54,15 +54,21 @@ export function DayCardHotels({ day }: DayCardHotelsProps) {
     [day, itinerary, tripStart]
   )
 
-  const rawHotels = segment ? (bySegment[segment.segmentKey]?.hotels ?? []) : []
+  const segmentState = segment ? bySegment[segment.segmentKey] : undefined
+  const rawHotels = segmentState?.hotels ?? []
   const prepared = useMemo(() => prepareRouteStayHotels(rawHotels), [rawHotels])
   const hotels = useMemo(
     () => applyRouteStayFilters(prepared, filters),
     [prepared, filters]
   )
 
-  const isLoading = segment ? (bySegment[segment.segmentKey]?.isLoading ?? true) : false
-  const error = segment ? bySegment[segment.segmentKey]?.error : undefined
+  const error = segmentState?.error
+
+  const isLoading =
+    segment != null &&
+    prepared.length === 0 &&
+    !error &&
+    (!segmentState || segmentState.isLoading)
 
   if (!segment) return null
 
@@ -71,45 +77,45 @@ export function DayCardHotels({ day }: DayCardHotelsProps) {
     'snap-x snap-mandatory scroll-smooth'
   )
 
+  const showSkeleton = isLoading && prepared.length === 0
+
   return (
     <div className="mt-4 pt-4 border-t border-slate-100">
       <h4 className="text-sm font-bold text-slate-800 mb-2">
         🏨 Hoteli v {segment.cityLabel}
       </h4>
 
-      {!isLoading && prepared.length > 0 ? (
+      {showSkeleton ? (
+        <div className={scrollRowClass} aria-busy="true" aria-label="Nalagam hotele">
+          {Array.from({ length: SKELETON_COUNT }).map((_, i) => (
+            <RouteStayCardSkeleton key={i} className="snap-start" />
+          ))}
+        </div>
+      ) : null}
+
+      {!showSkeleton && prepared.length > 0 ? (
         <DayCardHotelFilters filters={filters} onChange={setFilters} />
       ) : null}
 
-      {error && !isLoading && prepared.length === 0 ? (
+      {!showSkeleton && error && prepared.length === 0 ? (
         <p className="text-xs text-amber-800 bg-amber-50 border border-amber-100 rounded-lg px-3 py-2">
           {error}
         </p>
       ) : null}
 
-      {isLoading && prepared.length === 0 ? (
-        <div className={scrollRowClass}>
-          {Array.from({ length: SKELETON_COUNT }).map((_, i) => (
-            <div key={i} className="w-[min(85vw,260px)] shrink-0 snap-start">
-              <SkeletonCard />
-            </div>
-          ))}
-        </div>
-      ) : null}
-
-      {!isLoading && prepared.length === 0 && !error ? (
+      {!showSkeleton && !isLoading && prepared.length === 0 && !error ? (
         <p className="text-xs text-slate-500 rounded-lg border border-dashed border-slate-200 bg-slate-50/80 px-3 py-3 text-center">
           Ni hotelov za te datume v {segment.cityLabel}.
         </p>
       ) : null}
 
-      {!isLoading && prepared.length > 0 && hotels.length === 0 ? (
+      {!showSkeleton && prepared.length > 0 && hotels.length === 0 ? (
         <p className="text-xs text-slate-500 rounded-lg border border-dashed border-slate-200 bg-slate-50/80 px-3 py-2 text-center mb-2">
           Noben hotel ne ustreza izbrani lokaciji — poskusi drug filter.
         </p>
       ) : null}
 
-      {hotels.length > 0 ? (
+      {!showSkeleton && hotels.length > 0 ? (
         <div className={scrollRowClass}>
           {hotels.map((accom) => (
             <RouteStayCard

@@ -60,6 +60,7 @@ export const hr: Messages = {
     hotelsOnRoute: 'Preporučeni smještaji na ruti',
     hotelsOnRouteHint: 'Hoteli uz vašu rutu prema odabranom letu i AI planu',
     exportPdf: 'Preuzmi PDF',
+    exportPdfGenerating: 'Generating PDF…',
     exportGoogleDocs: 'Spremi u Google Docs',
     exportGroupAria: 'Izvezi plan',
     sectionAria: 'AI plan i rezultati letova',
