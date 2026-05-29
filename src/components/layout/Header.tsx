@@ -2,6 +2,7 @@
 import Link from 'next/link'
 import Image from 'next/image'
 import { LanguageSelector } from '@/components/layout/LanguageSelector'
+import { UserMenu } from '@/components/auth/LoginModal'
 import { useTranslations } from '@/i18n/LocaleProvider'
 
 export default function Header() {
@@ -58,6 +59,7 @@ export default function Header() {
         </nav>
 
         <div className="flex items-center gap-2">
+          <UserMenu />
           <LanguageSelector />
         </div>
       </div>

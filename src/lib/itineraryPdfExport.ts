@@ -208,7 +208,22 @@ export async function sendItineraryToMakePdfWebhook(
   const res = await fetch(MAKE_PDF_WEBHOOK_URL, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(itineraryData),
+    body: JSON.stringify({ ...itineraryData, exportType: 'pdf' }),
+  })
+
+  if (!res.ok) {
+    const detail = await res.text().catch(() => '')
+    throw new Error(detail || `Make webhook failed (${res.status})`)
+  }
+}
+
+export async function sendItineraryToMakeGoogleDocsWebhook(
+  itineraryData: ItineraryExportPayload
+): Promise<void> {
+  const res = await fetch(MAKE_PDF_WEBHOOK_URL, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ ...itineraryData, exportType: 'google_docs' }),
   })
 
   if (!res.ok) {

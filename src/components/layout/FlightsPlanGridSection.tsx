@@ -1,7 +1,8 @@
 'use client'
 
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { parseISO, startOfDay } from 'date-fns'
+import { useSession } from 'next-auth/react'
 import { useSelectedFlightStore } from '@/store/useSelectedFlightStore'
 import { usePlannerStore } from '@/store/usePlannerStore'
 import { useSearchStore } from '@/store/useSearchStore'
@@ -16,8 +17,11 @@ import { useSkyscannerRedirect } from '@/hooks/useSkyscannerRedirect'
 import { useFlightResultsColumnHeight } from '@/hooks/useFlightResultsColumnHeight'
 import {
   buildItineraryExportPayload,
+  sendItineraryToMakeGoogleDocsWebhook,
   sendItineraryToMakePdfWebhook,
 } from '@/lib/itineraryPdfExport'
+import { consumePendingExportAction } from '@/lib/authPendingExport'
+import { useAuthUiStore } from '@/store/useAuthUiStore'
 import { CONTENT_CONTAINER, PLANNER_RESULTS_GRID } from '@/lib/layoutConstants'
 import { cn } from '@/lib/utils'
 import { useTranslations } from '@/i18n/LocaleProvider'
@@ -190,6 +194,10 @@ export function FlightsPlanGridSection() {
 
 function PlannerExportActions() {
   const { t } = useTranslations()
+  const { data: session, status } = useSession()
+  const openLoginModal = useAuthUiStore((s) => s.openLoginModal)
+  const pendingAction = useAuthUiStore((s) => s.pendingAction)
+  const clearPendingAction = useAuthUiStore((s) => s.clearPendingAction)
   const search = useSearchStore()
   const itinerary = usePlannerStore((s) => s.itinerary)
   const tripSummary = usePlannerStore((s) => s.tripSummary)
@@ -201,7 +209,9 @@ function PlannerExportActions() {
   const { departureDate } = useSearchStore()
 
   const [isPdfExporting, setIsPdfExporting] = useState(false)
+  const [isDocsExporting, setIsDocsExporting] = useState(false)
   const [pdfError, setPdfError] = useState<string | null>(null)
+  const [docsError, setDocsError] = useState<string | null>(null)
 
   const tripStart = useMemo(() => {
     if (selectedFlight?.outboundArrivalAt) {
@@ -214,15 +224,11 @@ function PlannerExportActions() {
     return startOfDay(new Date())
   }, [selectedFlight, hotelsOnlyContext, departureDate])
 
-  const canExportPdf = itinerary.length > 0 && !isPdfExporting
+  const canExportPdf = itinerary.length > 0 && !isPdfExporting && !isDocsExporting
+  const canExportDocs = itinerary.length > 0 && !isPdfExporting && !isDocsExporting
 
-  async function handleExportPdf() {
-    if (!canExportPdf) return
-
-    setPdfError(null)
-    setIsPdfExporting(true)
-
-    const itineraryData = buildItineraryExportPayload({
+  function buildExportPayload() {
+    return buildItineraryExportPayload({
       search,
       selectedFlight,
       itinerary,
@@ -232,9 +238,16 @@ function PlannerExportActions() {
       specialRequestsText,
       travelTempo: travelTempo ?? undefined,
     })
+  }
+
+  async function handleExportPdf() {
+    if (!canExportPdf) return
+
+    setPdfError(null)
+    setIsPdfExporting(true)
 
     try {
-      await sendItineraryToMakePdfWebhook(itineraryData)
+      await sendItineraryToMakePdfWebhook(buildExportPayload())
     } catch (err) {
       console.error('[pdf export]', err)
       setPdfError(t('errors.pdfExportFailed'))
@@ -242,6 +255,57 @@ function PlannerExportActions() {
       setIsPdfExporting(false)
     }
   }
+
+  async function handleExportGoogleDocs() {
+    if (!canExportDocs) return
+
+    setDocsError(null)
+    setIsDocsExporting(true)
+
+    try {
+      await sendItineraryToMakeGoogleDocsWebhook(buildExportPayload())
+    } catch (err) {
+      console.error('[google docs export]', err)
+      setDocsError(t('auth.googleDocsExportFailed'))
+    } finally {
+      setIsDocsExporting(false)
+    }
+  }
+
+  const exportPdfRef = useRef(handleExportPdf)
+  const exportDocsRef = useRef(handleExportGoogleDocs)
+  exportPdfRef.current = handleExportPdf
+  exportDocsRef.current = handleExportGoogleDocs
+
+  function runExportAction(action: 'pdf' | 'docs') {
+    if (action === 'pdf') void exportPdfRef.current()
+    else void exportDocsRef.current()
+  }
+
+  function requireAuthForExport(action: 'pdf' | 'docs') {
+    if (status === 'loading') return
+    if (!session) {
+      openLoginModal(action)
+      return
+    }
+    runExportAction(action)
+  }
+
+  useEffect(() => {
+    if (status !== 'authenticated') return
+
+    const stored = consumePendingExportAction()
+    if (stored) {
+      runExportAction(stored)
+      clearPendingAction()
+      return
+    }
+
+    if (pendingAction) {
+      runExportAction(pendingAction)
+      clearPendingAction()
+    }
+  }, [status, session, pendingAction, clearPendingAction])
 
   return (
     <div
@@ -254,11 +318,16 @@ function PlannerExportActions() {
           {pdfError}
         </p>
       ) : null}
+      {docsError ? (
+        <p className="text-xs text-red-700 bg-red-50 border border-red-100 rounded-lg px-3 py-2">
+          {docsError}
+        </p>
+      ) : null}
 
       <div className="flex flex-col sm:flex-row gap-2">
         <button
           type="button"
-          onClick={() => void handleExportPdf()}
+          onClick={() => requireAuthForExport('pdf')}
           disabled={!canExportPdf}
           aria-busy={isPdfExporting}
           className={cn(
@@ -277,18 +346,22 @@ function PlannerExportActions() {
         </button>
         <button
           type="button"
-          onClick={() => {
-            /* TODO: Google Docs export */
-          }}
+          onClick={() => requireAuthForExport('docs')}
+          disabled={!canExportDocs}
+          aria-busy={isDocsExporting}
           className={cn(
             'inline-flex flex-1 items-center justify-center gap-2 rounded-xl border px-4 py-2.5',
             'text-sm font-semibold transition-all duration-200',
             'border-sky-200/80 bg-white text-sky-800 hover:bg-sky-50 hover:border-sky-400',
-            'shadow-sm'
+            'shadow-sm disabled:opacity-60 disabled:cursor-not-allowed disabled:hover:bg-white'
           )}
         >
-          <FileText className="w-4 h-4 shrink-0" aria-hidden />
-          {t('planner.exportGoogleDocs')}
+          {isDocsExporting ? (
+            <Loader2 className="w-4 h-4 shrink-0 animate-spin" aria-hidden />
+          ) : (
+            <FileText className="w-4 h-4 shrink-0" aria-hidden />
+          )}
+          {isDocsExporting ? t('auth.googleDocsGenerating') : t('planner.exportGoogleDocs')}
         </button>
       </div>
     </div>

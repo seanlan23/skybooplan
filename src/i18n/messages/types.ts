@@ -207,6 +207,31 @@ export type Messages = {
     selectDestinationDates: string
     selectTravelTempo: string
   }
+  auth: {
+    login: string
+    logout: string
+    myPlans: string
+    modalTitle: string
+    modalSubtitle: string
+    googleLogin: string
+    dividerOr: string
+    emailLabel: string
+    passwordLabel: string
+    confirmPasswordLabel: string
+    loginButton: string
+    registerLink: string
+    registerButton: string
+    haveAccount: string
+    closeAria: string
+    invalidCredentials: string
+    registerSuccess: string
+    emailExists: string
+    weakPassword: string
+    passwordMismatch: string
+    genericError: string
+    googleDocsGenerating: string
+    googleDocsExportFailed: string
+  }
 }
 
 export type DeepPartialMessages = {
