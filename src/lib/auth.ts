@@ -3,7 +3,7 @@ import { getServerSession } from 'next-auth'
 import CredentialsProvider from 'next-auth/providers/credentials'
 import GoogleProvider from 'next-auth/providers/google'
 import { assertAuthEnvConfigured } from '@/lib/authConfig'
-import { ensureAuthEnvDefaults } from '@/lib/safeUrl'
+import { ensureAuthEnvDefaults, getGoogleOAuthRedirectUri } from '@/lib/safeUrl'
 import { verifyUserCredentials } from '@/lib/userStore'
 
 ensureAuthEnvDefaults()
@@ -12,6 +12,7 @@ export { assertAuthEnvConfigured, getAuthConfigIssues, isAuthConfigured } from '
 
 function buildProviders(): NextAuthOptions['providers'] {
   const providers: NextAuthOptions['providers'] = []
+  const googleRedirectUri = getGoogleOAuthRedirectUri()
 
   const googleClientId = process.env.GOOGLE_CLIENT_ID?.trim()
   const googleClientSecret = process.env.GOOGLE_CLIENT_SECRET?.trim()
@@ -21,7 +22,11 @@ function buildProviders(): NextAuthOptions['providers'] {
       GoogleProvider({
         clientId: googleClientId,
         clientSecret: googleClientSecret,
-        // callbackUrl gradi NextAuth iz hosta zahteve (applyRequestOriginToAuthEnv v route handlerju).
+        authorization: {
+          params: {
+            redirect_uri: googleRedirectUri,
+          },
+        },
       })
     )
   } else if (process.env.NODE_ENV === 'development') {

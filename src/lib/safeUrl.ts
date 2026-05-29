@@ -1,7 +1,13 @@
-export const DEFAULT_PRODUCTION_URL = 'https://skybooplan.com'
+export const DEFAULT_PRODUCTION_URL = 'https://www.skybooplan.com'
 export const DEFAULT_LOCAL_URL = 'http://localhost:3000'
 export const NEXTAUTH_BASE_PATH = '/api/auth'
 export const GOOGLE_OAUTH_CALLBACK_PATH = `${NEXTAUTH_BASE_PATH}/callback/google`
+export const DEFAULT_PRODUCTION_GOOGLE_REDIRECT_URI = `${DEFAULT_PRODUCTION_URL}${GOOGLE_OAUTH_CALLBACK_PATH}`
+
+/** Vercel preview URL-ji (npr. skybooplan-xxx.vercel.app) niso veljavni za Google OAuth. */
+export function isVercelPreviewHost(value: string): boolean {
+  return value.includes('.vercel.app')
+}
 
 /** Preveri, ali je niz veljaven absolutni http(s) URL. */
 export function isValidAbsoluteUrl(value: string | undefined | null): boolean {
@@ -44,87 +50,104 @@ export function safeNewUrl(input: string | undefined | null, base?: string): URL
   }
 }
 
-/** Priporočen NEXTAUTH_URL z fallbackom (produkcija → skybooplan.com). */
+/** Varno preberi URL iz Next.js / Fetch Request (podpira relativni req.url). */
+export function getRequestUrl(req: Request): URL | null {
+  try {
+    const raw = req.url?.trim()
+    if (!raw) return null
+
+    if (raw.startsWith('http://') || raw.startsWith('https://')) {
+      return new URL(raw)
+    }
+
+    const host =
+      req.headers.get('x-forwarded-host')?.split(',')[0]?.trim() ||
+      req.headers.get('host')?.split(',')[0]?.trim()
+    if (!host) return null
+
+    const proto = req.headers.get('x-forwarded-proto')?.split(',')[0]?.trim() || 'https'
+    return new URL(raw, `${proto}://${host}`)
+  } catch {
+    return null
+  }
+}
+
+/**
+ * redirect_uri, ki ga Google Provider vedno pošlje Google-u.
+ * V produkciji vedno www.skybooplan.com — nikoli Vercel preview URL.
+ */
+export function getGoogleOAuthRedirectUri(): string {
+  const fromEnv = process.env.GOOGLE_OAUTH_REDIRECT_URI?.trim()
+  if (fromEnv?.includes('/callback/')) {
+    return fromEnv
+  }
+
+  if (process.env.NODE_ENV === 'development') {
+    return `${DEFAULT_LOCAL_URL}${GOOGLE_OAUTH_CALLBACK_PATH}`
+  }
+
+  return DEFAULT_PRODUCTION_GOOGLE_REDIRECT_URI
+}
+
+/** Priporočen NEXTAUTH_URL — brez Vercel preview URL-jev v produkciji. */
 export function resolveNextAuthUrl(): string {
   const candidates = [
     process.env.NEXTAUTH_URL,
     process.env.NEXT_PUBLIC_APP_URL,
-    process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : undefined,
+    process.env.NODE_ENV === 'production' ? undefined : (
+      process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : undefined
+    ),
     process.env.NODE_ENV === 'production' ? DEFAULT_PRODUCTION_URL : DEFAULT_LOCAL_URL,
   ]
 
   for (const candidate of candidates) {
     const resolved = coalesceAbsoluteUrl(candidate)
-    if (resolved) return resolved
-  }
-
-  return DEFAULT_PRODUCTION_URL
-}
-
-/** Priporočen app base URL (NEXT_PUBLIC_APP_URL). */
-export function resolveAppBaseUrl(): string {
-  const candidates = [
-    process.env.NEXT_PUBLIC_APP_URL,
-    process.env.NEXTAUTH_URL,
-    process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : undefined,
-    process.env.NODE_ENV === 'production' ? DEFAULT_PRODUCTION_URL : DEFAULT_LOCAL_URL,
-  ]
-
-  for (const candidate of candidates) {
-    const resolved = coalesceAbsoluteUrl(candidate)
-    if (resolved) return resolved
+    if (resolved && !isVercelPreviewHost(resolved)) {
+      return resolved
+    }
   }
 
   return process.env.NODE_ENV === 'production' ? DEFAULT_PRODUCTION_URL : DEFAULT_LOCAL_URL
 }
 
-/** Kanonični URL aplikacije (NEXTAUTH_URL → NEXT_PUBLIC_APP_URL → fallback). */
+/** Priporočen app base URL (NEXT_PUBLIC_APP_URL). */
+export function resolveAppBaseUrl(): string {
+  return resolveNextAuthUrl()
+}
+
+/** Kanonični URL aplikacije (produkcija → www.skybooplan.com). */
 export function getCanonicalAppUrl(): string {
   ensureAuthEnvDefaults()
   return resolveNextAuthUrl()
 }
 
-/** Google OAuth redirect URI, ki ga NextAuth pošlje v Google. */
+/** Google OAuth redirect URI iz izbranega origin-a. */
 export function buildGoogleOAuthRedirectUri(origin?: string): string {
+  if (process.env.NODE_ENV === 'production' && !origin) {
+    return getGoogleOAuthRedirectUri()
+  }
   const base = coalesceAbsoluteUrl(origin) ?? getCanonicalAppUrl()
+  if (isVercelPreviewHost(base)) {
+    return getGoogleOAuthRedirectUri()
+  }
   return `${base}${GOOGLE_OAUTH_CALLBACK_PATH}`
 }
 
 /** Seznam redirect URI-jev za Google Cloud Console. */
 export function getGoogleOAuthRedirectUrisForConsole(): string[] {
-  const canonical = getCanonicalAppUrl()
-  const parsed = safeNewUrl(canonical)
-  if (!parsed) return [buildGoogleOAuthRedirectUri()]
-
-  const hosts = new Set<string>([parsed.host])
-  if (parsed.host.startsWith('www.')) {
-    hosts.add(parsed.host.slice(4))
-  } else if (!parsed.host.includes('localhost') && !parsed.host.includes('127.0.0.1')) {
-    hosts.add(`www.${parsed.host}`)
-  }
-
-  const vercelHost = process.env.VERCEL_URL?.trim()
-  if (vercelHost) hosts.add(vercelHost)
-
-  return Array.from(hosts).map(
-    (host) => `${parsed.protocol}//${host}${GOOGLE_OAUTH_CALLBACK_PATH}`
-  )
+  return [
+    DEFAULT_PRODUCTION_GOOGLE_REDIRECT_URI,
+    `https://skybooplan.com${GOOGLE_OAUTH_CALLBACK_PATH}`,
+    `${DEFAULT_LOCAL_URL}${GOOGLE_OAUTH_CALLBACK_PATH}`,
+  ]
 }
 
-/**
- * Origin iz HTTP zahteve — prednost ima URL zahteve (dejanski host v brskalniku),
- * nato x-forwarded-host / host. NextAuth na Vercelu sicer bere headerje, ki lahko
- * izpustijo www, zato pred handlerjem popravimo headerje iz req.url.
- */
+/** Origin iz HTTP zahteve (samo diagnostika — ne za OAuth v produkciji). */
 export function resolveOriginFromRequest(req: Request): string | null {
-  try {
-    const requestUrl = new URL(req.url)
-    if (requestUrl.host) {
-      const fromUrl = coalesceAbsoluteUrl(`${requestUrl.protocol}//${requestUrl.host}`)
-      if (fromUrl) return fromUrl
-    }
-  } catch {
-    // nadaljuj z headerji
+  const requestUrl = getRequestUrl(req)
+  if (requestUrl?.host) {
+    const fromUrl = coalesceAbsoluteUrl(`${requestUrl.protocol}//${requestUrl.host}`)
+    if (fromUrl) return fromUrl
   }
 
   const headers = req.headers
@@ -137,23 +160,37 @@ export function resolveOriginFromRequest(req: Request): string | null {
   return coalesceAbsoluteUrl(`${protocol}://${host}`)
 }
 
-/** Za ta auth request nastavi NEXTAUTH_URL na host iz zahteve (www ali brez www). */
-export function applyRequestOriginToAuthEnv(req: Request): string | null {
+/** V produkciji vedno prava domena — nikoli *.vercel.app. */
+export function ensureProductionAuthUrl(): string {
+  const canonical = coalesceAbsoluteUrl(process.env.NEXTAUTH_URL)
+  const url =
+    canonical && !isVercelPreviewHost(canonical) ? canonical : DEFAULT_PRODUCTION_URL
+  process.env.NEXTAUTH_URL = url
+  return url
+}
+
+/** Pripravi auth request — produkcija uporablja fiksno domeno. */
+export function applyRequestOriginToAuthEnv(req: Request): string {
+  if (process.env.NODE_ENV === 'production') {
+    return ensureProductionAuthUrl()
+  }
+
   const origin = resolveOriginFromRequest(req)
-  if (origin) {
+  if (origin && !isVercelPreviewHost(origin)) {
     process.env.NEXTAUTH_URL = origin
     return origin
   }
+
   ensureAuthEnvDefaults()
-  return process.env.NEXTAUTH_URL ?? null
+  return process.env.NEXTAUTH_URL ?? DEFAULT_LOCAL_URL
 }
 
-/**
- * Popravi headerje, da NextAuth detectOrigin uporabi isti host kot brskalnik (npr. www).
- */
+/** Popravi headerje, da NextAuth callback ujema produkcijsko domeno. */
 export function patchAuthRequestForNextAuth(req: Request): Request {
-  const origin = resolveOriginFromRequest(req)
-  if (!origin) return req
+  const origin =
+    process.env.NODE_ENV === 'production'
+      ? ensureProductionAuthUrl()
+      : applyRequestOriginToAuthEnv(req)
 
   const parsed = safeNewUrl(origin)
   if (!parsed) return req
@@ -174,17 +211,20 @@ export function patchAuthRequestForNextAuth(req: Request): Request {
     init.duplex = 'half'
   }
 
-  return new Request(req.url, init)
+  const requestUrl = getRequestUrl(req)
+  const targetUrl = requestUrl
+    ? `${parsed.origin}${requestUrl.pathname}${requestUrl.search}`
+    : req.url
+
+  return new Request(targetUrl, init)
 }
 
-/**
- * Nastavi NEXTAUTH_URL samo če manjka (build/SSR). Ob dejanski auth zahtevi
- * uporabi applyRequestOriginToAuthEnv(), da se host ujema z www ali brez www.
- */
+/** Nastavi NEXTAUTH_URL samo če manjka (build/SSR). */
 export function ensureAuthEnvDefaults(): void {
-  if (coalesceAbsoluteUrl(process.env.NEXTAUTH_URL)) return
+  if (coalesceAbsoluteUrl(process.env.NEXTAUTH_URL) && !isVercelPreviewHost(process.env.NEXTAUTH_URL!)) {
+    return
+  }
   process.env.NEXTAUTH_URL = resolveNextAuthUrl()
 }
 
-// Ob importu modula — varnost med build/SSR (SessionProvider / NextAuth parse-url)
 ensureAuthEnvDefaults()

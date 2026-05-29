@@ -3,7 +3,7 @@ import { NextResponse } from 'next/server'
 import { assertAuthEnvConfigured, authOptions } from '@/lib/auth'
 import {
   applyRequestOriginToAuthEnv,
-  buildGoogleOAuthRedirectUri,
+  getGoogleOAuthRedirectUri,
   patchAuthRequestForNextAuth,
 } from '@/lib/safeUrl'
 
@@ -37,7 +37,7 @@ async function handleAuth(
       err instanceof Error ? err.message : 'NextAuth konfiguracija nepopolna'
     console.error('[auth]', message, {
       requestOrigin: origin,
-      googleRedirectUri: buildGoogleOAuthRedirectUri(origin ?? undefined),
+      googleRedirectUri: getGoogleOAuthRedirectUri(),
     })
 
     return NextResponse.json(
