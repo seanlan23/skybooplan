@@ -42,6 +42,6 @@ export async function GET(req: Request) {
       !!process.env.UPSTASH_REDIS_REST_TOKEN?.trim(),
     issues,
     note:
-      'Na Vercelu NextAuth za Google OAuth uporablja host iz zahteve (x-forwarded-host), ne NEXTAUTH_URL. googleRedirectUriUsedNow mora biti v Google Console.',
+      'NEXTAUTH_URL na Vercelu je samo fallback ob buildu. Ob prijavi se redirect_uri gradi iz hosta zahteve (www ali brez www). googleRedirectUriUsedNow mora biti v Google Console.',
   })
 }

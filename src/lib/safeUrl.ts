@@ -112,10 +112,21 @@ export function getGoogleOAuthRedirectUrisForConsole(): string[] {
 }
 
 /**
- * Origin iz HTTP zahteve (enako logiko uporablja NextAuth na Vercelu).
- * NextAuth na Vercelu ignorira NEXTAUTH_URL in uporabi x-forwarded-host.
+ * Origin iz HTTP zahteve — prednost ima URL zahteve (dejanski host v brskalniku),
+ * nato x-forwarded-host / host. NextAuth na Vercelu sicer bere headerje, ki lahko
+ * izpustijo www, zato pred handlerjem popravimo headerje iz req.url.
  */
 export function resolveOriginFromRequest(req: Request): string | null {
+  try {
+    const requestUrl = new URL(req.url)
+    if (requestUrl.host) {
+      const fromUrl = coalesceAbsoluteUrl(`${requestUrl.protocol}//${requestUrl.host}`)
+      if (fromUrl) return fromUrl
+    }
+  } catch {
+    // nadaljuj z headerji
+  }
+
   const headers = req.headers
   const forwardedHost = headers.get('x-forwarded-host')?.split(',')[0]?.trim()
   const host = forwardedHost || headers.get('host')?.split(',')[0]?.trim()
@@ -126,14 +137,53 @@ export function resolveOriginFromRequest(req: Request): string | null {
   return coalesceAbsoluteUrl(`${protocol}://${host}`)
 }
 
+/** Za ta auth request nastavi NEXTAUTH_URL na host iz zahteve (www ali brez www). */
+export function applyRequestOriginToAuthEnv(req: Request): string | null {
+  const origin = resolveOriginFromRequest(req)
+  if (origin) {
+    process.env.NEXTAUTH_URL = origin
+    return origin
+  }
+  ensureAuthEnvDefaults()
+  return process.env.NEXTAUTH_URL ?? null
+}
+
 /**
- * Nastavi veljavne URL env vrednosti pred NextAuth SSR/build.
- * Prazna ali neveljavna NEXTAUTH_URL povzroči "TypeError: Invalid URL" med prerenderingom.
- * NEXT_PUBLIC_APP_URL ne mutiramo — webpack jo inline-a v client bundle.
+ * Popravi headerje, da NextAuth detectOrigin uporabi isti host kot brskalnik (npr. www).
+ */
+export function patchAuthRequestForNextAuth(req: Request): Request {
+  const origin = resolveOriginFromRequest(req)
+  if (!origin) return req
+
+  const parsed = safeNewUrl(origin)
+  if (!parsed) return req
+
+  const headers = new Headers(req.headers)
+  headers.set('x-forwarded-host', parsed.host)
+  headers.set('host', parsed.host)
+  headers.set('x-forwarded-proto', parsed.protocol === 'http:' ? 'http' : 'https')
+
+  const init: RequestInit & { duplex?: 'half' } = {
+    method: req.method,
+    headers,
+    redirect: req.redirect,
+  }
+
+  if (req.method !== 'GET' && req.method !== 'HEAD' && req.body) {
+    init.body = req.body
+    init.duplex = 'half'
+  }
+
+  return new Request(req.url, init)
+}
+
+/**
+ * Nastavi NEXTAUTH_URL samo če manjka (build/SSR). Ob dejanski auth zahtevi
+ * uporabi applyRequestOriginToAuthEnv(), da se host ujema z www ali brez www.
  */
 export function ensureAuthEnvDefaults(): void {
-  const nextAuth = coalesceAbsoluteUrl(process.env.NEXTAUTH_URL) ?? resolveNextAuthUrl()
-  process.env.NEXTAUTH_URL = nextAuth
+  if (coalesceAbsoluteUrl(process.env.NEXTAUTH_URL)) return
+  process.env.NEXTAUTH_URL = resolveNextAuthUrl()
 }
 
 // Ob importu modula — varnost med build/SSR (SessionProvider / NextAuth parse-url)
