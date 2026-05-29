@@ -17,6 +17,8 @@ export function buildSkyscannerSearchUrlForOffer(
 }
 
 /** Affiliate URL za isto relacijo/datum na Skyscanner (Travelpayouts). */
+import { safeNewUrl } from '@/lib/safeUrl'
+
 export function buildAffiliateUrlForFlightOffer(
   offer: FlightOffer,
   opts?: { adults?: number; cabinClass?: string }
@@ -26,13 +28,13 @@ export function buildAffiliateUrlForFlightOffer(
       ? offer.deepLink
       : buildSkyscannerSearchUrlForOffer(offer, opts)
 
-  try {
-    const url = new URL(base)
+  const url = safeNewUrl(base)
+  if (url) {
     if (offer.skyscannerItineraryId && !url.searchParams.has('selectedoutbound')) {
       url.searchParams.set('selectedoutbound', offer.skyscannerItineraryId)
     }
     return wrapTravelpayoutsAffiliateUrl(url.toString())
-  } catch {
-    return wrapTravelpayoutsAffiliateUrl(base)
   }
+
+  return wrapTravelpayoutsAffiliateUrl(base)
 }

@@ -1,5 +1,6 @@
 import { format } from 'date-fns'
 import { BOOKING_CJ_AFFILIATE_ID, DEFAULT_BOOKING_AID } from '@/config/booking'
+import { safeNewUrl } from '@/lib/safeUrl'
 
 export { BOOKING_CJ_AFFILIATE_ID, DEFAULT_BOOKING_AID }
 
@@ -55,12 +56,10 @@ export function buildBookingUrl(params: BookingAffiliateParams): string {
   const adults = Math.max(1, params.adults)
 
   if (params.hotelPageUrl?.trim()) {
-    try {
-      const raw = params.hotelPageUrl.trim()
-      const url = new URL(raw.startsWith('http') ? raw : `https://www.booking.com${raw}`)
+    const raw = params.hotelPageUrl.trim()
+    const url = safeNewUrl(raw.startsWith('http') ? raw : `https://www.booking.com${raw}`)
+    if (url) {
       return appendBookingQueryParams(url, { ...params, adults, children, rooms }, aid)
-    } catch {
-      // nadaljuj s highlighted_hotels
     }
   }
 

@@ -1,5 +1,6 @@
 'use client'
 
+import '@/lib/safeUrl'
 import { SessionProvider } from 'next-auth/react'
 import { LocaleProvider } from '@/i18n/LocaleProvider'
 import { AuthSessionBridge, LoginModal } from '@/components/auth/LoginModal'

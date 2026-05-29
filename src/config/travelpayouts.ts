@@ -37,7 +37,7 @@ export function isTravelpayoutsAffiliateReady(): boolean {
 }
 
 export function isLocalDevSite(): boolean {
-  const url = process.env.NEXT_PUBLIC_APP_URL ?? ''
+  const url = process.env.NEXT_PUBLIC_APP_URL?.trim() ?? ''
   return !url || url.includes('localhost') || url.includes('127.0.0.1')
 }
 

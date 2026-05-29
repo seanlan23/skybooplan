@@ -2,15 +2,34 @@ import type { NextAuthOptions } from 'next-auth'
 import { getServerSession } from 'next-auth'
 import CredentialsProvider from 'next-auth/providers/credentials'
 import GoogleProvider from 'next-auth/providers/google'
+import { assertAuthEnvConfigured } from '@/lib/authConfig'
+import { ensureAuthEnvDefaults } from '@/lib/safeUrl'
 import { verifyUserCredentials } from '@/lib/userStore'
 
-export const authOptions: NextAuthOptions = {
-  secret: process.env.NEXTAUTH_SECRET,
-  providers: [
-    GoogleProvider({
-      clientId: process.env.GOOGLE_CLIENT_ID ?? '',
-      clientSecret: process.env.GOOGLE_CLIENT_SECRET ?? '',
-    }),
+ensureAuthEnvDefaults()
+
+export { assertAuthEnvConfigured, getAuthConfigIssues, isAuthConfigured } from '@/lib/authConfig'
+
+function buildProviders(): NextAuthOptions['providers'] {
+  const providers: NextAuthOptions['providers'] = []
+
+  const googleClientId = process.env.GOOGLE_CLIENT_ID?.trim()
+  const googleClientSecret = process.env.GOOGLE_CLIENT_SECRET?.trim()
+
+  if (googleClientId && googleClientSecret) {
+    providers.push(
+      GoogleProvider({
+        clientId: googleClientId,
+        clientSecret: googleClientSecret,
+      })
+    )
+  } else if (process.env.NODE_ENV === 'development') {
+    console.warn(
+      '[auth] GOOGLE_CLIENT_ID / GOOGLE_CLIENT_SECRET manjkata — Google prijava je onemogočena.'
+    )
+  }
+
+  providers.push(
     CredentialsProvider({
       name: 'Email and Password',
       credentials: {
@@ -31,8 +50,15 @@ export const authOptions: NextAuthOptions = {
           name: user.name,
         }
       },
-    }),
-  ],
+    })
+  )
+
+  return providers
+}
+
+export const authOptions: NextAuthOptions = {
+  secret: process.env.NEXTAUTH_SECRET,
+  providers: buildProviders(),
   session: {
     strategy: 'jwt',
   },
