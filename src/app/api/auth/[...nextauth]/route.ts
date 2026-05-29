@@ -1,8 +1,14 @@
 import NextAuth from 'next-auth'
 import { NextResponse } from 'next/server'
 import { assertAuthEnvConfigured, authOptions } from '@/lib/auth'
+import { buildGoogleOAuthRedirectUri, ensureAuthEnvDefaults, resolveOriginFromRequest } from '@/lib/safeUrl'
 
 export const dynamic = 'force-dynamic'
+
+function prepareAuthRequest(req: Request) {
+  ensureAuthEnvDefaults()
+  return resolveOriginFromRequest(req)
+}
 
 function createHandler() {
   assertAuthEnvConfigured()
@@ -23,11 +29,14 @@ async function handleAuth(
   context: { params: { nextauth: string[] } }
 ) {
   try {
+    prepareAuthRequest(req)
     return await getHandler()(req, context)
   } catch (err) {
     const message =
       err instanceof Error ? err.message : 'NextAuth konfiguracija nepopolna'
-    console.error('[auth]', message)
+    console.error('[auth]', message, {
+      googleRedirectUri: buildGoogleOAuthRedirectUri(prepareAuthRequest(req) ?? undefined),
+    })
 
     return NextResponse.json(
       {

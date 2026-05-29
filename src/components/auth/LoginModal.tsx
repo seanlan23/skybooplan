@@ -68,7 +68,7 @@ export function LoginModal() {
   async function handleGoogleLogin() {
     setError(null)
     if (pendingAction) savePendingExportAction(pendingAction)
-    await signIn('google', { callbackUrl: window.location.href })
+    await signIn('google', { callbackUrl: `${window.location.origin}/` })
   }
 
   async function handleCredentialsSubmit(e: React.FormEvent) {

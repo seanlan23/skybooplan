@@ -21,6 +21,7 @@ function buildProviders(): NextAuthOptions['providers'] {
       GoogleProvider({
         clientId: googleClientId,
         clientSecret: googleClientSecret,
+        // Brez ročnega callbackUrl — NextAuth ga zgradi iz origin zahteve (na Vercelu x-forwarded-host).
       })
     )
   } else if (process.env.NODE_ENV === 'development') {
