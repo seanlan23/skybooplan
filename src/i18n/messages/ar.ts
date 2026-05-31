@@ -242,6 +242,11 @@ export const ar: Messages = {
   nights: {
     label: 'الليالي',
   },
+  airports: {
+    all: 'جميع المطارات',
+    airport: 'مطار',
+    city: 'مدينة',
+  },
   footer: {
     copyright: '© 2026 skybooplan.com · جميع الأسعار تقريبية.',
     privacy: 'الخصوصية',

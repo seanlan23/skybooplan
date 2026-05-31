@@ -58,7 +58,11 @@ export const FALLBACK_AIRPORTS: Airport[] = [
   { iata: 'NRT', name: 'Tokyo Narita', city: 'Tokyo', country: 'Japan', lat: 35.772, lon: 140.3929, iataCityCode: 'TYO' },
 ]
 
-export function searchFallbackAirports(query: string, limit = 12): Airport[] {
+export function searchFallbackAirports(
+  query: string,
+  limit = 12,
+  allAirportsLabel = 'All airports'
+): Airport[] {
   const q = query.trim().toLowerCase()
   if (q.length < 2) return []
 
@@ -67,5 +71,5 @@ export function searchFallbackAirports(query: string, limit = 12): Airport[] {
     return haystack.includes(q)
   })
 
-  return organizeAirportSuggestions(matched, query, limit)
+  return organizeAirportSuggestions(matched, query, limit, allAirportsLabel)
 }

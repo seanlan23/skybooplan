@@ -243,6 +243,11 @@ export const sl: Messages = {
   nights: {
     label: 'Nočitve',
   },
+  airports: {
+    all: 'Vsa letališča',
+    airport: 'Letališče',
+    city: 'Mesto',
+  },
   footer: {
     copyright: '© 2026 skybooplan.com · Vse cene so informativne.',
     privacy: 'Zasebnost',

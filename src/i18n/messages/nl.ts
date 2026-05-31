@@ -242,6 +242,11 @@ export const nl: Messages = {
   nights: {
     label: 'Nachten',
   },
+  airports: {
+    all: 'Alle luchthavens',
+    airport: 'Luchthaven',
+    city: 'Stad',
+  },
   footer: {
     copyright: '© 2026 skybooplan.com · Alle prijzen zijn indicatief.',
     privacy: 'Privacy',

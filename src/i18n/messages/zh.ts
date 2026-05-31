@@ -242,6 +242,11 @@ export const zh: Messages = {
   nights: {
     label: '晚数',
   },
+  airports: {
+    all: '所有机场',
+    airport: '机场',
+    city: '城市',
+  },
   footer: {
     copyright: '© 2026 skybooplan.com · 所有价格仅供参考。',
     privacy: '隐私',

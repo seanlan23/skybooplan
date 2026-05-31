@@ -242,6 +242,11 @@ export const ja: Messages = {
   nights: {
     label: '泊数',
   },
+  airports: {
+    all: 'すべての空港',
+    airport: '空港',
+    city: '都市',
+  },
   footer: {
     copyright: '© 2026 skybooplan.com · すべての価格は目安です。',
     privacy: 'プライバシー',

@@ -236,6 +236,11 @@ export type Messages = {
   nights: {
     label: string
   }
+  airports: {
+    all: string
+    airport: string
+    city: string
+  }
   footer: {
     copyright: string
     privacy: string

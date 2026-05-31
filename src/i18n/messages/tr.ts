@@ -242,6 +242,11 @@ export const tr: Messages = {
   nights: {
     label: 'Gece',
   },
+  airports: {
+    all: 'Tüm havalimanları',
+    airport: 'Havalimanı',
+    city: 'Şehir',
+  },
   footer: {
     copyright: '© 2026 skybooplan.com · Tüm fiyatlar tahminidir.',
     privacy: 'Gizlilik',

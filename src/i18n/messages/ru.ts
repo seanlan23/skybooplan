@@ -242,6 +242,11 @@ export const ru: Messages = {
   nights: {
     label: 'Ночей',
   },
+  airports: {
+    all: 'Все аэропорты',
+    airport: 'Аэропорт',
+    city: 'Город',
+  },
   footer: {
     copyright: '© 2026 skybooplan.com · Все цены ориентировочные.',
     privacy: 'Конфиденциальность',

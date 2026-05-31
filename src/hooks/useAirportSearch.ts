@@ -2,9 +2,11 @@
 import { useState, useEffect, useRef } from 'react'
 import { searchFallbackAirports } from '@/data/airports'
 import { mergeAirportLists, organizeAirportSuggestions } from '@/lib/airportSuggestions'
+import { useTranslations } from '@/i18n/LocaleProvider'
 import type { Airport } from '@/types/flight.types'
 
 export function useAirportSearch() {
+  const { t } = useTranslations()
   const [query, setQuery] = useState('')
   const [results, setResults] = useState<Airport[]>([])
   const [isLoading, setIsLoading] = useState(false)
@@ -17,7 +19,13 @@ export function useAirportSearch() {
       return
     }
 
-    const local = organizeAirportSuggestions(searchFallbackAirports(query, 12), query, 10)
+    const allAirportsLabel = t('airports.all')
+    const local = organizeAirportSuggestions(
+      searchFallbackAirports(query, 12, allAirportsLabel),
+      query,
+      10,
+      allAirportsLabel
+    )
     setResults(local)
 
     if (timerRef.current) clearTimeout(timerRef.current)
@@ -35,7 +43,7 @@ export function useAirportSearch() {
         const data = await res.json()
         const remote = Array.isArray(data) ? data : (data.airports ?? data.data ?? [])
         setResults(
-          organizeAirportSuggestions(mergeAirportLists(local, remote), query, 10)
+          organizeAirportSuggestions(mergeAirportLists(local, remote), query, 10, allAirportsLabel)
         )
       } catch {
         clearTimeout(timeoutId)
@@ -48,7 +56,7 @@ export function useAirportSearch() {
     return () => {
       if (timerRef.current) clearTimeout(timerRef.current)
     }
-  }, [query])
+  }, [query, t])
 
   return { query, setQuery, results, isLoading }
 }

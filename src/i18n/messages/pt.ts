@@ -242,6 +242,11 @@ export const pt: Messages = {
   nights: {
     label: 'Noites',
   },
+  airports: {
+    all: 'Todos os aeroportos',
+    airport: 'Aeroporto',
+    city: 'Cidade',
+  },
   footer: {
     copyright: '© 2026 skybooplan.com · Todos os preços são indicativos.',
     privacy: 'Privacidade',

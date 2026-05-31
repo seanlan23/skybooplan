@@ -1,12 +1,15 @@
 import type { Airport } from '@/types/flight.types'
 
-const ALL_AIRPORTS_SUFFIX = '(Vsa letališča)'
-
-/** Prikaz v dropdownu / čipu: «London (Vsa letališča) - LON» */
-export function formatAllAirportsLabel(cityName: string, metroCode: string): string {
+/** Prikaz v dropdownu / čipu: «London (All airports) - LON» */
+export function formatAllAirportsLabel(
+  cityName: string,
+  metroCode: string,
+  allAirportsLabel: string
+): string {
   const city = cityName.trim()
   const code = metroCode.trim().toUpperCase()
-  return `${city} ${ALL_AIRPORTS_SUFFIX} - ${code}`
+  const label = allAirportsLabel.trim()
+  return `${city} (${label}) - ${code}`
 }
 
 /** Znane IATA metro kode (mesto z več letališči) */
@@ -34,10 +37,11 @@ export function createAllAirportsOption(params: {
   country: string
   lat?: number
   lon?: number
+  allAirportsLabel?: string
 }): Airport {
   const city = params.city.trim()
   const code = params.metroCode.toUpperCase()
-  const label = formatAllAirportsLabel(city, code)
+  const label = formatAllAirportsLabel(city, code, params.allAirportsLabel ?? 'All airports')
   return {
     iata: code,
     name: label,
@@ -80,7 +84,8 @@ function relevanceScore(airport: Airport, query: string): number {
 export function organizeAirportSuggestions(
   airports: Airport[],
   query: string,
-  limit = 10
+  limit = 10,
+  allAirportsLabel = 'All airports'
 ): Airport[] {
   const q = query.trim()
   const seen = new Set<string>()
@@ -124,6 +129,7 @@ export function organizeAirportSuggestions(
       country: country || sample?.country || '',
       lat: sample?.lat,
       lon: sample?.lon,
+      allAirportsLabel,
     })
     metroByCode.set(code, metro)
     metros.push(metro)

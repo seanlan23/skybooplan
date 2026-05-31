@@ -6,6 +6,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { MapPin, X, Search, Building2 } from 'lucide-react'
 import { useSearchStore } from '@/store/useSearchStore'
 import { useAirportSearch } from '@/hooks/useAirportSearch'
+import { formatAllAirportsLabel } from '@/lib/airportSuggestions'
 import { cn } from '@/lib/utils'
 import type { Airport } from '@/types/flight.types'
 import {
@@ -27,16 +28,16 @@ function airportOptionKey(airport: Airport): string {
   return airport.isAllAirports ? `metro-${airport.iata}` : airport.iata
 }
 
-function chipLabel(airport: Airport): string {
+function chipLabel(airport: Airport, allLabel: string): string {
   if (airport.isAllAirports) {
-    return airport.displayName ?? airport.name
+    return formatAllAirportsLabel(airport.city, airport.iata, allLabel)
   }
   return airport.city
 }
 
-function optionTitle(airport: Airport): string {
+function optionTitle(airport: Airport, allLabel: string): string {
   if (airport.isAllAirports) {
-    return airport.displayName ?? airport.name
+    return formatAllAirportsLabel(airport.city, airport.iata, allLabel)
   }
   return airport.name
 }
@@ -49,6 +50,7 @@ export function AirportInput({
   className,
 }: AirportInputProps) {
   const { t } = useTranslations()
+  const allAirportsLabel = t('airports.all')
   const { origins, destination, addOrigin, removeOrigin, setDestination } = useSearchStore()
   const { query, setQuery, results, isLoading } = useAirportSearch()
   const [focused, setFocused] = useState(false)
@@ -152,7 +154,19 @@ export function AirportInput({
 
         return (
           <div key={airportOptionKey(airport)}>
-            {showDivider && <div className="border-t border-slate-100" aria-hidden />}
+            {index === 0 && isMetro && (
+              <div className="px-4 py-1.5 text-[10px] font-semibold uppercase tracking-wide text-slate-400 bg-slate-50/80">
+                {t('airports.city')}
+              </div>
+            )}
+            {showDivider && (
+              <>
+                <div className="border-t border-slate-100" aria-hidden />
+                <div className="px-4 py-1.5 text-[10px] font-semibold uppercase tracking-wide text-slate-400 bg-slate-50/80">
+                  {t('airports.airport')}
+                </div>
+              </>
+            )}
             <button
               type="button"
               role="option"
@@ -182,11 +196,11 @@ export function AirportInput({
                     isMetro ? 'font-semibold text-slate-900' : 'font-medium text-slate-800'
                   )}
                 >
-                  {optionTitle(airport)}
+                  {optionTitle(airport, allAirportsLabel)}
                 </p>
                 <p className="text-xs text-slate-500">
                   {isMetro
-                    ? `Vsa letališča · ${airport.country}`
+                    ? `${allAirportsLabel} · ${airport.country}`
                     : `${airport.city}, ${airport.country}`}
                 </p>
               </div>
@@ -228,7 +242,7 @@ export function AirportInput({
             <span className="text-lg font-bold text-slate-900 tracking-tight tabular-nums shrink-0">
               {primary.iata}
             </span>
-            <span className="text-xs text-slate-500 truncate font-normal">{chipLabel(primary)}</span>
+            <span className="text-xs text-slate-500 truncate font-normal">{chipLabel(primary, allAirportsLabel)}</span>
             <span
               role="button"
               tabIndex={0}
@@ -265,7 +279,7 @@ export function AirportInput({
                         a.isAllAirports ? 'text-leaf-700 font-semibold' : 'text-sky-500 hidden sm:inline'
                       )}
                     >
-                      {chipLabel(a)}
+                      {chipLabel(a, allAirportsLabel)}
                     </span>
                     <button type="button" onClick={(e) => { e.stopPropagation(); remove(a.iata) }}>
                       <X className="w-3 h-3" />

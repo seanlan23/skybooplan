@@ -242,6 +242,11 @@ export const hr: Messages = {
   nights: {
     label: 'Noći',
   },
+  airports: {
+    all: 'Sva aerodroma',
+    airport: 'Aerodrom',
+    city: 'Grad',
+  },
   footer: {
     copyright: '© 2026 skybooplan.com · Sve cijene su informativne.',
     privacy: 'Privatnost',
