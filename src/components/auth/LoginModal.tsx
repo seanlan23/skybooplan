@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react'
 import Image from 'next/image'
+import Link from 'next/link'
 import { signIn, signOut, useSession } from 'next-auth/react'
 import { ChevronDown, Loader2, LogOut, Map, X } from 'lucide-react'
 import { cn } from '@/lib/utils'
@@ -345,15 +346,23 @@ export function UserMenu() {
           role="menu"
           className="absolute right-0 top-full mt-2 z-50 min-w-[180px] rounded-xl border border-slate-200 bg-white shadow-lg py-1 overflow-hidden"
         >
-          <button
-            type="button"
+          <Link
+            href="/dashboard"
             role="menuitem"
             onClick={() => setOpen(false)}
-            className="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-slate-700 hover:bg-slate-50 text-left"
+            className="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-slate-700 hover:bg-slate-50"
           >
             <Map className="w-4 h-4 text-slate-400" />
             {t('auth.myPlans')}
-          </button>
+          </Link>
+          <Link
+            href="/login"
+            role="menuitem"
+            onClick={() => setOpen(false)}
+            className="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-slate-500 hover:bg-slate-50 border-t border-slate-100"
+          >
+            {t('auth.login')} (račun za plane)
+          </Link>
           <button
             type="button"
             role="menuitem"

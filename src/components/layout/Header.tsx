@@ -1,6 +1,7 @@
 'use client'
 import Link from 'next/link'
 import Image from 'next/image'
+import { LayoutDashboard } from 'lucide-react'
 import { LanguageSelector } from '@/components/layout/LanguageSelector'
 import { UserMenu } from '@/components/auth/LoginModal'
 import { useTranslations } from '@/i18n/LocaleProvider'
@@ -59,6 +60,13 @@ export default function Header() {
         </nav>
 
         <div className="flex items-center gap-2">
+          <Link
+            href="/dashboard"
+            className="inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm font-semibold text-slate-700 hover:bg-slate-100 transition-colors"
+          >
+            <LayoutDashboard className="h-4 w-4 text-sky-600" />
+            <span className="hidden sm:inline">{t('auth.myPlans')}</span>
+          </Link>
           <UserMenu />
           <LanguageSelector />
         </div>

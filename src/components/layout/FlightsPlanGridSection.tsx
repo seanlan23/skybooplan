@@ -25,6 +25,7 @@ import { useAuthUiStore } from '@/store/useAuthUiStore'
 import { CONTENT_CONTAINER, PLANNER_RESULTS_GRID } from '@/lib/layoutConstants'
 import { cn } from '@/lib/utils'
 import { useTranslations } from '@/i18n/LocaleProvider'
+import { SaveTripButton } from '@/components/planner/SaveTripButton'
 
 export function FlightsPlanGridSection() {
   const { t } = useTranslations()
@@ -327,6 +328,7 @@ function PlannerExportActions() {
       ) : null}
 
       <div className="flex flex-col sm:flex-row gap-2">
+        <SaveTripButton disabled={itinerary.length === 0 || isPdfExporting || isDocsExporting} />
         <button
           type="button"
           onClick={() => requireAuthForExport('pdf')}

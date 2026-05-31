@@ -3,14 +3,19 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { getSupabaseBrowserClient } from '@/integrations/supabase/client';
+import { isSupabaseConfigured } from '@/integrations/supabase/config';
+import { SupabaseSetupNotice } from '@/components/auth/SupabaseSetupNotice';
 import type { AuthChangeEvent, Session, User } from '@supabase/supabase-js';
 
 export function AuthGuard({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
+  const configured = isSupabaseConfigured();
 
   useEffect(() => {
+    if (!configured) return;
+
     const supabase = getSupabaseBrowserClient();
 
     supabase.auth.getUser().then(({ data }: { data: { user: User | null } }) => {
@@ -34,7 +39,11 @@ export function AuthGuard({ children }: { children: React.ReactNode }) {
     });
 
     return () => subscription.unsubscribe();
-  }, [router]);
+  }, [router, configured]);
+
+  if (!configured) {
+    return <SupabaseSetupNotice />;
+  }
 
   if (loading || !user) {
     return (

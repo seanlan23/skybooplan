@@ -4,6 +4,8 @@ import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { Plus } from 'lucide-react';
 import { getSupabaseBrowserClient } from '@/integrations/supabase/client';
+import { isSupabaseConfigured } from '@/integrations/supabase/config';
+import { SupabaseSetupNotice } from '@/components/auth/SupabaseSetupNotice';
 import { fetchUserTrips } from '@/lib/trips';
 import { DashboardStats } from '@/components/dashboard/DashboardStats';
 import { TripCard } from '@/components/dashboard/TripCard';
@@ -15,7 +17,15 @@ export default function DashboardPage() {
   const [loading, setLoading] = useState(true);
   const [userName, setUserName] = useState('');
 
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const configured = isSupabaseConfigured();
+
   useEffect(() => {
+    if (!configured) {
+      setLoading(false);
+      return;
+    }
+
     async function load() {
       try {
         const supabase = getSupabaseBrowserClient();
@@ -27,12 +37,17 @@ export default function DashboardPage() {
         setTrips(rows);
       } catch (err) {
         console.error('[dashboard]', err);
+        setLoadError(err instanceof Error ? err.message : 'Napaka pri nalaganju planov');
       } finally {
         setLoading(false);
       }
     }
     void load();
-  }, []);
+  }, [configured]);
+
+  if (!configured) {
+    return <SupabaseSetupNotice />;
+  }
 
   return (
     <div className="p-6 md:p-8 max-w-6xl mx-auto space-y-8">
@@ -52,6 +67,16 @@ export default function DashboardPage() {
       </header>
 
       {!loading && trips.length > 0 && <DashboardStats trips={trips} />}
+
+      {loadError && (
+        <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
+          {loadError}. Preveri Supabase migracijo tabele <code>trips</code> in prijavo na{' '}
+          <Link href="/login" className="font-medium underline">
+            /login
+          </Link>
+          .
+        </div>
+      )}
 
       {loading ? (
         <div className="text-sm text-slate-400 py-12 text-center">Nalaganje planov…</div>

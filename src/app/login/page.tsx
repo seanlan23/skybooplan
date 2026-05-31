@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { Suspense } from 'react';
 import { AuthForm } from '@/components/auth/AuthForm';
 
 export default function LoginPage() {
@@ -10,7 +11,9 @@ export default function LoginPage() {
         </Link>
       </header>
       <main className="flex flex-1 items-center justify-center px-4 pb-16">
-        <AuthForm mode="login" />
+        <Suspense fallback={<div className="text-sm text-slate-500">Nalaganje…</div>}>
+          <AuthForm mode="login" />
+        </Suspense>
       </main>
     </div>
   );

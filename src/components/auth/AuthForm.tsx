@@ -1,9 +1,11 @@
 'use client';
 
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { useState } from 'react';
 import { getSupabaseBrowserClient } from '@/integrations/supabase/client';
+import { isSupabaseConfigured } from '@/integrations/supabase/config';
+import { SupabaseSetupNotice } from '@/components/auth/SupabaseSetupNotice';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Label } from '@/components/ui/Label';
@@ -13,6 +15,8 @@ type AuthMode = 'login' | 'signup';
 
 export function AuthForm({ mode }: { mode: AuthMode }) {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const nextPath = searchParams.get('next') || '/dashboard';
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [name, setName] = useState('');
@@ -20,6 +24,10 @@ export function AuthForm({ mode }: { mode: AuthMode }) {
   const [loading, setLoading] = useState(false);
 
   const isSignup = mode === 'signup';
+
+  if (!isSupabaseConfigured()) {
+    return <SupabaseSetupNotice />;
+  }
 
   async function handleEmailAuth(e: React.FormEvent) {
     e.preventDefault();
@@ -45,7 +53,7 @@ export function AuthForm({ mode }: { mode: AuthMode }) {
         });
         if (signInError) throw signInError;
       }
-      router.push('/dashboard');
+      router.push(nextPath.startsWith('/') ? nextPath : '/dashboard');
       router.refresh();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Prijava ni uspela');
@@ -61,7 +69,7 @@ export function AuthForm({ mode }: { mode: AuthMode }) {
     const { error: oauthError } = await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: {
-        redirectTo: `${window.location.origin}/dashboard`,
+        redirectTo: `${window.location.origin}${nextPath.startsWith('/') ? nextPath : '/dashboard'}`,
       },
     });
     if (oauthError) {
