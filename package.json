@@ -22,7 +22,8 @@
     "bcryptjs": "^3.0.3",
     "clsx": "^2.1.1",
     "date-fns": "^3.6.0",
-    "framer-motion": "^11.2.10",
+    "embla-carousel-react": "^8.6.0",
+    "framer-motion": "^11.18.2",
     "lucide-react": "^0.395.0",
     "mapbox-gl": "^3.24.0",
     "next": "14.2.5",
@@ -34,10 +35,11 @@
     "tailwind-merge": "^2.3.0",
     "typescript": "^5",
     "zod": "^3.23.8",
-    "zustand": "^4.5.2"
+    "zustand": "^4.5.7"
   },
   "devDependencies": {
     "@types/bcryptjs": "^2.4.6",
+    "@types/mapbox-gl": "^3.4.1",
     "@types/node": "^20",
     "@types/react": "^18",
     "@types/react-dom": "^18",
