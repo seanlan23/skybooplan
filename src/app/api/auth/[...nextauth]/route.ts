@@ -1,66 +1,35 @@
 import NextAuth from 'next-auth'
 import { NextResponse } from 'next/server'
 import { assertAuthEnvConfigured, authOptions } from '@/lib/auth'
-import {
-  applyRequestOriginToAuthEnv,
-  getGoogleOAuthRedirectUri,
-  patchAuthRequestForNextAuth,
-} from '@/lib/safeUrl'
 
 export const dynamic = 'force-dynamic'
-
-function createHandler() {
-  assertAuthEnvConfigured()
-  return NextAuth(authOptions)
-}
+export const runtime = 'nodejs'
 
 let handler: ReturnType<typeof NextAuth> | null = null
-
 function getHandler() {
   if (!handler) {
-    handler = createHandler()
+    assertAuthEnvConfigured()
+    handler = NextAuth(authOptions)
   }
   return handler
 }
 
-async function handleAuth(
-  req: Request,
-  context: { params: { nextauth: string[] } }
-) {
-  const origin = applyRequestOriginToAuthEnv(req)
-  const authReq = patchAuthRequestForNextAuth(req)
-
+async function handle(req: Request, context: { params: { nextauth: string[] } }) {
   try {
-    return await getHandler()(authReq, context)
+    return await getHandler()(req, context)
   } catch (err) {
-    const message =
-      err instanceof Error ? err.message : 'NextAuth konfiguracija nepopolna'
-    console.error('[auth]', message, {
-      requestOrigin: origin,
-      googleRedirectUri: getGoogleOAuthRedirectUri(),
-    })
-
+    const message = err instanceof Error ? err.message : 'NextAuth konfiguracija nepopolna'
+    console.error('[auth] handler error:', message)
     return NextResponse.json(
-      {
-        error: 'AuthConfigurationError',
-        message,
-        hint: 'Preveri /api/auth/status in Environment Variables na Vercel.',
-      },
+      { error: 'AuthConfigurationError', message, hint: 'Glej /api/auth/status' },
       { status: 500 }
     )
   }
 }
 
-export async function GET(
-  req: Request,
-  context: { params: { nextauth: string[] } }
-) {
-  return handleAuth(req, context)
+export async function GET(req: Request, ctx: { params: { nextauth: string[] } }) {
+  return handle(req, ctx)
 }
-
-export async function POST(
-  req: Request,
-  context: { params: { nextauth: string[] } }
-) {
-  return handleAuth(req, context)
+export async function POST(req: Request, ctx: { params: { nextauth: string[] } }) {
+  return handle(req, ctx)
 }
