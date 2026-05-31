@@ -1,6 +1,6 @@
-import type { DeepPartialMessages } from './types'
+import type { Messages } from './types'
 
-export const hr: DeepPartialMessages = {
+export const hr: Messages = {
   common: {
     help: 'Pomoć',
     loading: 'Učitavanje...',
@@ -212,5 +212,30 @@ export const hr: DeepPartialMessages = {
     pdfExportFailed: 'PDF trenutno nije moguće generirati. Pokušaj ponovno.',
     selectDestinationDates: 'Odaberi mjesto i datume (od–do).',
     selectTravelTempo: 'Odaberi tempo putovanja.',
+  },
+  auth: {
+    login: 'Prijava',
+    logout: 'Odjava',
+    myPlans: 'Moji planovi',
+    modalTitle: 'Spremi plan putovanja',
+    modalSubtitle: 'Prijavi se za preuzimanje PDF-a ili spremanje u Google Docs',
+    googleLogin: 'Prijava s Googleom',
+    dividerOr: '— ili —',
+    emailLabel: 'Tvoja e-mail adresa',
+    passwordLabel: 'Lozinka',
+    confirmPasswordLabel: 'Potvrdi lozinku',
+    loginButton: 'Prijava',
+    registerLink: 'Nemaš račun? Registriraj se',
+    haveAccount: 'Već imaš račun? Prijavi se',
+    registerButton: 'Registracija',
+    closeAria: 'Zatvori',
+    invalidCredentials: 'Neispravan e-mail ili lozinka.',
+    registerSuccess: 'Račun je kreiran. Prijavljujemo te…',
+    emailExists: 'Ovaj e-mail je već registriran.',
+    weakPassword: 'Lozinka mora imati najmanje 8 znakova.',
+    passwordMismatch: 'Lozinke se ne podudaraju.',
+    genericError: 'Nešto je pošlo po krivu. Pokušaj ponovno.',
+    googleDocsGenerating: 'Spremanje u Google Docs…',
+    googleDocsExportFailed: 'Spremanje u Google Docs trenutno nije moguće. Pokušaj ponovno.',
   },
 }

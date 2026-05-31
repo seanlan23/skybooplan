@@ -1,6 +1,6 @@
-import type { DeepPartialMessages } from './types'
+import type { Messages } from './types'
 
-export const de: DeepPartialMessages = {
+export const de: Messages = {
   common: {
     help: 'Hilfe',
     loading: 'Wird geladen...',
@@ -212,5 +212,30 @@ export const de: DeepPartialMessages = {
     pdfExportFailed: 'PDF konnte gerade nicht erstellt werden. Bitte erneut versuchen.',
     selectDestinationDates: 'Reiseziel und Daten (von–bis) auswählen.',
     selectTravelTempo: 'Reisetempo auswählen.',
+  },
+  auth: {
+    login: 'Anmelden',
+    logout: 'Abmelden',
+    myPlans: 'Meine Pläne',
+    modalTitle: 'Reiseplan speichern',
+    modalSubtitle: 'Melden Sie sich an, um PDF herunterzuladen oder in Google Docs zu speichern',
+    googleLogin: 'Mit Google anmelden',
+    dividerOr: '— oder —',
+    emailLabel: 'Ihre E-Mail-Adresse',
+    passwordLabel: 'Passwort',
+    confirmPasswordLabel: 'Passwort bestätigen',
+    loginButton: 'Anmelden',
+    registerLink: 'Noch kein Konto? Registrieren',
+    haveAccount: 'Bereits ein Konto? Anmelden',
+    registerButton: 'Registrieren',
+    closeAria: 'Schließen',
+    invalidCredentials: 'Ungültige E-Mail oder Passwort.',
+    registerSuccess: 'Konto erstellt. Sie werden angemeldet…',
+    emailExists: 'Diese E-Mail ist bereits registriert.',
+    weakPassword: 'Passwort muss mindestens 8 Zeichen haben.',
+    passwordMismatch: 'Passwörter stimmen nicht überein.',
+    genericError: 'Etwas ist schiefgelaufen. Bitte erneut versuchen.',
+    googleDocsGenerating: 'Wird in Google Docs gespeichert…',
+    googleDocsExportFailed: 'Speichern in Google Docs derzeit nicht möglich. Bitte erneut versuchen.',
   },
 }

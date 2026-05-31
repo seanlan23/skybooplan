@@ -56,8 +56,8 @@ export const LOCALE_FLAGS: Record<Locale, string> = {
   ja: '🇯🇵',
 }
 
-export function isRtlLocale(locale: Locale): boolean {
-  return locale === 'ar'
+export function isRtlLocale(locale: Locale | string): boolean {
+  return locale === 'ar' || locale === 'he'
 }
 
 export function isLocale(value: string): value is Locale {

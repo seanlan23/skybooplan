@@ -38,6 +38,7 @@ export const metadata: Metadata = {
 }
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
+  // Server render: privzeti lang="sl". LocaleProvider posodobi lang/dir na clientu iz localStorage.
   return (
     <html lang="sl" className={`${plusJakarta.variable} ${syne.variable} ${jetbrainsMono.variable}`}>
       <body className="font-sans antialiased">
