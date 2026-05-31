@@ -1,6 +1,7 @@
 'use client'
 
 import { useMemo, useState } from 'react'
+import { Hotel } from 'lucide-react'
 import { parseISO, startOfDay } from 'date-fns'
 import { RouteStayCard } from '@/components/accommodations/RouteStayCard'
 import { RouteStayCardSkeleton } from '@/components/accommodations/RouteStayCardSkeleton'
@@ -82,10 +83,11 @@ export function DayCardHotels({ day }: DayCardHotelsProps) {
   const showSkeleton = isLoading && prepared.length === 0
 
   return (
-    <div className="mt-4 pt-4 border-t border-slate-100">
-      <h4 className="text-sm font-bold text-slate-800 mb-2">
-        🏨 {t('hotels.inCity', { city: segment.cityLabel })}
-      </h4>
+    <div className="pt-2 border-t border-slate-100">
+      <div className="flex items-center gap-2 font-bold text-slate-900 mt-3 mb-3">
+        <Hotel className="h-5 w-5 text-sky-600" />
+        {t('hotels.inCity', { city: segment.cityLabel })}
+      </div>
 
       {showSkeleton ? (
         <div className={scrollRowClass} aria-busy="true" aria-label={t('hotels.loadingHotels')}>

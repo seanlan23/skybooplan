@@ -10,6 +10,7 @@ import { useAIItinerary } from '@/hooks/useAIItinerary'
 import { useItineraryCityHotels } from '@/hooks/useItineraryCityHotels'
 import { hasPlannerDestination } from '@/lib/itineraryPlannerContext'
 import { DayCard } from './DayCard'
+import { AiPlanSummary } from './AiPlanSummary'
 import { ItineraryTripSummaryCard } from './ItineraryTripSummaryCard'
 import { AIPlannerPreferencesForm } from './AIPlannerPreferencesForm'
 import { AIPlannerTempoNotes, aiGenerateButtonClass } from './AIPlannerTempoNotes'
@@ -420,7 +421,18 @@ export default function AIPlanner({
       )}
 
       {itinerary.length > 0 && (
-        <div className={cn('space-y-2', compact && 'pr-0.5')}>
+        <div className={cn('space-y-5', compact && 'pr-0.5')}>
+          <AiPlanSummary
+            destination={
+              selectedFlight?.destinationLabel ??
+              searchDestination?.city ??
+              itinerary[0]?.location ??
+              t('planner.defaultTitle')
+            }
+            summary={tripSummary?.generalTips?.[0] ?? itinerary[0]?.description?.slice(0, 200)}
+            dayCount={itinerary.length}
+            tripSummary={tripSummary}
+          />
           {itinerary.map((day) => (
             <DayCard key={`day-${day.day}-${day.title}`} day={day} index={day.day - 1} />
           ))}
