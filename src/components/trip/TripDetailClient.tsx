@@ -122,8 +122,11 @@ export function TripDetailClient({ tripId }: { tripId: string }) {
           {message}
         </div>
       )}
-      <div className="flex-1 min-h-0">
-        <ItineraryView itinerary={trip.itinerary} />
+      <div className="flex-1 min-h-0 overflow-hidden">
+        <ItineraryView
+          itinerary={trip.itinerary}
+          onBook={() => setPaywallOpen(true)}
+        />
       </div>
       <PdfPaywallModal
         open={paywallOpen}

@@ -15,6 +15,10 @@ export function buildTripMapStops(itinerary: Itinerary): TripMapItinerary {
     if (day.places.length === 0) continue;
 
     const anchor = day.places[0];
+    const cityPhoto =
+      anchor.images?.[0] ??
+      day.places.find((p) => p.images?.length)?.images?.[0];
+
     stops.push({
       id: `city-${day.dayNumber}`,
       name: day.title || anchor.name,
@@ -22,6 +26,7 @@ export function buildTripMapStops(itinerary: Itinerary): TripMapItinerary {
       lng: anchor.coordinates.lng,
       day: day.dayNumber,
       type: 'city',
+      photo: cityPhoto,
     });
 
     for (const place of day.places) {
@@ -32,6 +37,8 @@ export function buildTripMapStops(itinerary: Itinerary): TripMapItinerary {
         lng: place.coordinates.lng,
         day: day.dayNumber,
         type: placeStopType(place.category),
+        category: place.category,
+        photo: place.images?.[0],
       });
     }
   }
