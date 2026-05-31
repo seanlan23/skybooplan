@@ -2,6 +2,12 @@ export const dynamic = 'force-dynamic'
 
 import { NextRequest } from 'next/server'
 import OpenAI from 'openai'
+import {
+  appendAssistantUserMessage,
+  createAssistantThread,
+  getAssistantId,
+  streamAssistantRunToBuffer,
+} from '@/lib/openaiAssistant'
 import { assertOpenAIConfigured, getOpenAIClient } from '@/lib/openaiClient'
 import {
   assessItineraryCompleteness,
@@ -157,10 +163,8 @@ export async function POST(req: NextRequest) {
       }
 
       try {
-        let messages: ChatMessage[] = [
-          { role: 'system', content: systemPrompt },
-          { role: 'user', content: userMessage },
-        ]
+        const client = getOpenAIClient()
+        const assistantId = getAssistantId()
 
         let mergedDays: ItineraryDay[] = []
         let tripSummary: ReturnType<typeof parseItineraryResponse>['tripSummary'] = null
@@ -176,39 +180,81 @@ export async function POST(req: NextRequest) {
           }
         }
 
-        for (let round = 0; round <= MAX_CONTINUATION_ROUNDS; round++) {
-          const { buffer, finishReason } = await streamCompletionToBuffer(
-            messages,
-            emitPartialIfNeeded
-          )
+        if (assistantId) {
+          let threadId = await createAssistantThread(client, userMessage)
 
-          const parsed = parseBufferToDays(buffer, planner.locale)
-          mergedDays = mergeItineraryDaysByNumber(mergedDays, parsed.days)
-          if (parsed.tripSummary) tripSummary = parsed.tripSummary
+          for (let round = 0; round <= MAX_CONTINUATION_ROUNDS; round++) {
+            const { buffer, finishReason } = await streamAssistantRunToBuffer(
+              client,
+              threadId,
+              assistantId,
+              emitPartialIfNeeded
+            )
 
-          lastPartialCount = mergedDays.length
-          enqueue({ partialItinerary: mergedDays })
+            const parsed = parseBufferToDays(buffer, planner.locale)
+            mergedDays = mergeItineraryDaysByNumber(mergedDays, parsed.days)
+            if (parsed.tripSummary) tripSummary = parsed.tripSummary
 
-          const completeness = assessItineraryCompleteness(mergedDays, travelNights)
-          const hitTokenLimit = finishReason === 'length'
-          const shouldContinue =
-            completeness.isIncomplete &&
-            mergedDays.length > 0 &&
-            round < MAX_CONTINUATION_ROUNDS &&
-            (hitTokenLimit || parsed.days.length > 0)
+            lastPartialCount = mergedDays.length
+            enqueue({ partialItinerary: mergedDays })
 
-          if (!shouldContinue) break
+            const completeness = assessItineraryCompleteness(mergedDays, travelNights)
+            const hitTokenLimit = finishReason === 'length'
+            const shouldContinue =
+              completeness.isIncomplete &&
+              mergedDays.length > 0 &&
+              round < MAX_CONTINUATION_ROUNDS &&
+              (hitTokenLimit || parsed.days.length > 0)
 
-          const lastDay = mergedDays[mergedDays.length - 1]?.day ?? 0
-          messages = [
+            if (!shouldContinue) break
+
+            const lastDay = mergedDays[mergedDays.length - 1]?.day ?? 0
+            await appendAssistantUserMessage(
+              client,
+              threadId,
+              buildItineraryContinuationMessage(lastDay, totalDays, destLabel)
+            )
+          }
+        } else {
+          let messages: ChatMessage[] = [
             { role: 'system', content: systemPrompt },
             { role: 'user', content: userMessage },
-            { role: 'assistant', content: buffer },
-            {
-              role: 'user',
-              content: buildItineraryContinuationMessage(lastDay, totalDays, destLabel),
-            },
           ]
+
+          for (let round = 0; round <= MAX_CONTINUATION_ROUNDS; round++) {
+            const { buffer, finishReason } = await streamCompletionToBuffer(
+              messages,
+              emitPartialIfNeeded
+            )
+
+            const parsed = parseBufferToDays(buffer, planner.locale)
+            mergedDays = mergeItineraryDaysByNumber(mergedDays, parsed.days)
+            if (parsed.tripSummary) tripSummary = parsed.tripSummary
+
+            lastPartialCount = mergedDays.length
+            enqueue({ partialItinerary: mergedDays })
+
+            const completeness = assessItineraryCompleteness(mergedDays, travelNights)
+            const hitTokenLimit = finishReason === 'length'
+            const shouldContinue =
+              completeness.isIncomplete &&
+              mergedDays.length > 0 &&
+              round < MAX_CONTINUATION_ROUNDS &&
+              (hitTokenLimit || parsed.days.length > 0)
+
+            if (!shouldContinue) break
+
+            const lastDay = mergedDays[mergedDays.length - 1]?.day ?? 0
+            messages = [
+              { role: 'system', content: systemPrompt },
+              { role: 'user', content: userMessage },
+              { role: 'assistant', content: buffer },
+              {
+                role: 'user',
+                content: buildItineraryContinuationMessage(lastDay, totalDays, destLabel),
+              },
+            ]
+          }
         }
 
         let itinerary = enforceShortTripItinerary(mergedDays, destLabel, totalDays)
