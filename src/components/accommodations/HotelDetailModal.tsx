@@ -21,6 +21,7 @@ import { formatHotelDisplayLocation } from '@/lib/bookingLocation'
 import { dedupePhotoUrls, parseBookingHotelId } from '@/lib/hotelGallery'
 import { useSearchStore } from '@/store/useSearchStore'
 import { cn } from '@/lib/utils'
+import { useTranslations } from '@/i18n/LocaleProvider'
 import type { Accommodation } from '@/types/accommodation.types'
 
 const MODAL_THUMB_COUNT = 5
@@ -34,6 +35,7 @@ interface HotelDetailModalProps {
 }
 
 export function HotelDetailModal({ hotel, open, onClose }: HotelDetailModalProps) {
+  const { t } = useTranslations()
   const [photoIndex, setPhotoIndex] = useState(0)
   const [galleryUrls, setGalleryUrls] = useState<string[]>([])
   const [galleryLoading, setGalleryLoading] = useState(false)
@@ -279,7 +281,7 @@ export function HotelDetailModal({ hotel, open, onClose }: HotelDetailModalProps
               )}
               {hotel.hasBreakfast && (
                 <span className="inline-flex items-center gap-1 text-sm text-leaf-700">
-                  <Coffee className="w-4 h-4" /> Zajtrk
+                  <Coffee className="w-4 h-4" /> {t('common.breakfast')}
                 </span>
               )}
               {hotel.isBeachfront && (
@@ -313,7 +315,7 @@ export function HotelDetailModal({ hotel, open, onClose }: HotelDetailModalProps
                   <span className="text-lg font-normal text-slate-400">/noč</span>
                 </p>
                 <p className="text-sm text-slate-500 mt-1">
-                  Skupaj €{hotel.totalPrice} za izbrane datume
+                  {t('propertyCard.total')} €{hotel.totalPrice} za izbrane datume
                 </p>
               </div>
               <a

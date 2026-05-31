@@ -8,6 +8,7 @@ export const tr: Messages = {
     generatingPlan: 'Plan oluşturuluyor…',
     confirm: 'Onayla',
     notSet: 'ayarlanmadı',
+    breakfast: 'Kahvaltı',
   },
   nav: {
     flights: 'Uçuşlar',
@@ -212,6 +213,34 @@ export const tr: Messages = {
     noHotelsForDates: '{city} için bu tarihlerde otel yok.',
     filterNoMatch: 'Seçilen konuma uygun otel yok — başka bir filtre deneyin.',
     selectDestination: 'Varış yeri seçin',
+  },
+  map: {
+    loading: 'Harita yükleniyor…',
+  },
+  propertyCard: {
+    total: 'Toplam',
+  },
+  itinerary: {
+    tripSummary: 'Seyahat özeti',
+    backupDay: 'Yedek / yağmurlu gün',
+  },
+  hotelFilters: {
+    title: 'Filtreler',
+    min: 'Minimum',
+    max: 'Maksimum',
+    emptyAllTypes: 'Boş = tüm tipler',
+  },
+  flightBooking: {
+    lastName: 'Soyad',
+    dateOfBirth: 'Doğum tarihi',
+    male: 'Erkek',
+    female: 'Kadın',
+    passportNumber: 'Pasaport numarası',
+    countryIso: 'Ülke (ISO)',
+    passportExpiry: 'Pasaport geçerliliği',
+  },
+  nights: {
+    label: 'Gece',
   },
   footer: {
     copyright: '© 2026 skybooplan.com · Tüm fiyatlar tahminidir.',

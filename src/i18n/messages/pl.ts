@@ -8,6 +8,7 @@ export const pl: Messages = {
     generatingPlan: 'Generowanie planu…',
     confirm: 'Potwierdź',
     notSet: 'nie ustawiono',
+    breakfast: 'Śniadanie',
   },
   nav: {
     flights: 'Loty',
@@ -212,6 +213,34 @@ export const pl: Messages = {
     noHotelsForDates: 'Brak hoteli na te daty w {city}.',
     filterNoMatch: 'Żaden hotel nie pasuje do wybranej lokalizacji — spróbuj innego filtra.',
     selectDestination: 'Wybierz cel podróży',
+  },
+  map: {
+    loading: 'Ładowanie mapy…',
+  },
+  propertyCard: {
+    total: 'Razem',
+  },
+  itinerary: {
+    tripSummary: 'Podsumowanie podróży',
+    backupDay: 'Dzień zapasowy / deszczowy',
+  },
+  hotelFilters: {
+    title: 'Filtry',
+    min: 'Minimum',
+    max: 'Maksimum',
+    emptyAllTypes: 'Pusto = wszystkie typy',
+  },
+  flightBooking: {
+    lastName: 'Nazwisko',
+    dateOfBirth: 'Data urodzenia',
+    male: 'Mężczyzna',
+    female: 'Kobieta',
+    passportNumber: 'Numer paszportu',
+    countryIso: 'Kraj (ISO)',
+    passportExpiry: 'Ważność paszportu',
+  },
+  nights: {
+    label: 'Noce',
   },
   footer: {
     copyright: '© 2026 skybooplan.com · Wszystkie ceny mają charakter orientacyjny.',

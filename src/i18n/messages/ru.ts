@@ -8,6 +8,7 @@ export const ru: Messages = {
     generatingPlan: 'Создание плана…',
     confirm: 'Подтвердить',
     notSet: 'не задано',
+    breakfast: 'Завтрак',
   },
   nav: {
     flights: 'Рейсы',
@@ -212,6 +213,34 @@ export const ru: Messages = {
     noHotelsForDates: 'Нет отелей на эти даты в {city}.',
     filterNoMatch: 'Нет отелей по выбранному расположению — попробуйте другой фильтр.',
     selectDestination: 'Выберите направление',
+  },
+  map: {
+    loading: 'Загрузка карты…',
+  },
+  propertyCard: {
+    total: 'Итого',
+  },
+  itinerary: {
+    tripSummary: 'Сводка поездки',
+    backupDay: 'Запасной / дождливый день',
+  },
+  hotelFilters: {
+    title: 'Фильтры',
+    min: 'Минимум',
+    max: 'Максимум',
+    emptyAllTypes: 'Пусто = все типы',
+  },
+  flightBooking: {
+    lastName: 'Фамилия',
+    dateOfBirth: 'Дата рождения',
+    male: 'Мужской',
+    female: 'Женский',
+    passportNumber: 'Номер паспорта',
+    countryIso: 'Страна (ISO)',
+    passportExpiry: 'Срок действия паспорта',
+  },
+  nights: {
+    label: 'Ночей',
   },
   footer: {
     copyright: '© 2026 skybooplan.com · Все цены ориентировочные.',

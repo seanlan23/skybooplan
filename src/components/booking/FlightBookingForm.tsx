@@ -3,6 +3,7 @@ import { FlightLegSummary } from '@/components/search/FlightLegSummary'
 import type { BookingContact, PassengerFormData } from '@/types/booking.types'
 import type { FlightOffer } from '@/types/flight.types'
 import { Button } from '@/components/ui/Button'
+import { useTranslations } from '@/i18n/LocaleProvider'
 
 interface FlightBookingFormProps {
   offer: FlightOffer
@@ -32,6 +33,8 @@ export function FlightBookingForm({
   onSubmit,
   onCancel,
 }: FlightBookingFormProps) {
+  const { t } = useTranslations()
+
   function handleGenderChange(index: number, gender: PassengerFormData['gender']) {
     onPassengerChange(index, {
       gender,
@@ -91,7 +94,7 @@ export function FlightBookingForm({
               />
             </div>
             <div>
-              <label className={labelClass}>Priimek</label>
+              <label className={labelClass}>{t('flightBooking.lastName')}</label>
               <input
                 required
                 className={inputClass}
@@ -103,7 +106,7 @@ export function FlightBookingForm({
 
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className={labelClass}>Rojstni datum</label>
+              <label className={labelClass}>{t('flightBooking.dateOfBirth')}</label>
               <input
                 required
                 type="date"
@@ -121,15 +124,15 @@ export function FlightBookingForm({
                   handleGenderChange(index, e.target.value as PassengerFormData['gender'])
                 }
               >
-                <option value="male">Moški</option>
-                <option value="female">Ženski</option>
+                <option value="male">{t('flightBooking.male')}</option>
+                <option value="female">{t('flightBooking.female')}</option>
               </select>
             </div>
           </div>
 
           <div className="grid grid-cols-3 gap-3">
             <div className="col-span-2">
-              <label className={labelClass}>Številka potnega lista</label>
+              <label className={labelClass}>{t('flightBooking.passportNumber')}</label>
               <input
                 required
                 className={inputClass}
@@ -138,7 +141,7 @@ export function FlightBookingForm({
               />
             </div>
             <div>
-              <label className={labelClass}>Država (ISO)</label>
+              <label className={labelClass}>{t('flightBooking.countryIso')}</label>
               <input
                 required
                 maxLength={2}
@@ -154,7 +157,7 @@ export function FlightBookingForm({
           </div>
 
           <div>
-            <label className={labelClass}>Veljavnost potnega lista</label>
+            <label className={labelClass}>{t('flightBooking.passportExpiry')}</label>
             <input
               required
               type="date"

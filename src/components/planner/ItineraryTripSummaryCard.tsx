@@ -1,8 +1,11 @@
 'use client'
 import { CloudRain, Lightbulb, Wallet } from 'lucide-react'
+import { useTranslations } from '@/i18n/LocaleProvider'
 import type { ItineraryTripSummary } from '@/types/itinerary.types'
 
 export function ItineraryTripSummaryCard({ summary }: { summary: ItineraryTripSummary }) {
+  const { t } = useTranslations()
+
   if (
     !summary.totalCostEstimate &&
     !summary.rainyDayPlan &&
@@ -13,7 +16,7 @@ export function ItineraryTripSummaryCard({ summary }: { summary: ItineraryTripSu
 
   return (
     <div className="rounded-2xl border border-amber-200 bg-amber-50/80 p-4 space-y-3 text-sm text-amber-950">
-      <p className="font-display font-bold text-amber-900">Povzetek potovanja</p>
+      <p className="font-display font-bold text-amber-900">{t('itinerary.tripSummary')}</p>
 
       {summary.totalCostEstimate ? (
         <div className="flex gap-2">
@@ -40,7 +43,7 @@ export function ItineraryTripSummaryCard({ summary }: { summary: ItineraryTripSu
         <div className="flex gap-2 pt-1 border-t border-amber-200/80">
           <CloudRain className="w-4 h-4 shrink-0 text-amber-700 mt-0.5" />
           <div>
-            <p className="font-semibold text-amber-900">Rezervni / deževni dan</p>
+            <p className="font-semibold text-amber-900">{t('itinerary.backupDay')}</p>
             <p className="mt-0.5 text-amber-900/90">{summary.rainyDayPlan}</p>
           </div>
         </div>

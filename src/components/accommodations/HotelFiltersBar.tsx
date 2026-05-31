@@ -3,6 +3,7 @@
 import { Coffee, Waves, Star } from 'lucide-react'
 import { useAccomStore } from '@/store/useAccomStore'
 import { cn } from '@/lib/utils'
+import { useTranslations } from '@/i18n/LocaleProvider'
 
 const SORT_OPTIONS = [
   { value: 'recommended', label: 'Priporočeno' },
@@ -13,6 +14,7 @@ const SORT_OPTIONS = [
 
 /** Kompaktni filtri v vrstici (način z leti) */
 export function HotelFiltersBar() {
+  const { t } = useTranslations()
   const { filters, updateFilter } = useAccomStore()
 
   return (
@@ -64,7 +66,7 @@ export function HotelFiltersBar() {
             : 'bg-white border-slate-200 text-slate-600 hover:border-slate-300'
         )}
       >
-        <Coffee className="w-3 h-3" /> Zajtrk
+        <Coffee className="w-3 h-3" /> {t('common.breakfast')}
       </button>
 
       <button

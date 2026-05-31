@@ -8,6 +8,7 @@ export const ar: Messages = {
     generatingPlan: 'جارٍ إنشاء الخطة…',
     confirm: 'تأكيد',
     notSet: 'غير محدد',
+    breakfast: 'الإفطار',
   },
   nav: {
     flights: 'الرحلات',
@@ -212,6 +213,34 @@ export const ar: Messages = {
     noHotelsForDates: 'لا توجد فنادق لهذه التواريخ في {city}.',
     filterNoMatch: 'لا توجد فنادق تطابق الموقع المختار — جرّب فلترًا آخر.',
     selectDestination: 'اختر الوجهة',
+  },
+  map: {
+    loading: 'جاري تحميل الخريطة…',
+  },
+  propertyCard: {
+    total: 'الإجمالي',
+  },
+  itinerary: {
+    tripSummary: 'ملخص الرحلة',
+    backupDay: 'يوم احتياطي / ممطر',
+  },
+  hotelFilters: {
+    title: 'الفلاتر',
+    min: 'الحد الأدنى',
+    max: 'الحد الأقصى',
+    emptyAllTypes: 'فارغ = جميع الأنواع',
+  },
+  flightBooking: {
+    lastName: 'اسم العائلة',
+    dateOfBirth: 'تاريخ الميلاد',
+    male: 'ذكر',
+    female: 'أنثى',
+    passportNumber: 'رقم جواز السفر',
+    countryIso: 'الدولة (ISO)',
+    passportExpiry: 'صلاحية جواز السفر',
+  },
+  nights: {
+    label: 'الليالي',
   },
   footer: {
     copyright: '© 2026 skybooplan.com · جميع الأسعار تقريبية.',

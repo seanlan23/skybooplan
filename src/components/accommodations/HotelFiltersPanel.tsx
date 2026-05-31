@@ -2,6 +2,7 @@
 
 import { Coffee, Waves, Wifi, Star, Building2, Home, Castle } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { useTranslations } from '@/i18n/LocaleProvider'
 import type { AccomFilters, PropertyType } from '@/types/accommodation.types'
 
 const PROPERTY_TYPES: { value: PropertyType; label: string; icon: typeof Building2 }[] = [
@@ -25,6 +26,7 @@ export interface HotelFiltersPanelProps {
 }
 
 export function HotelFiltersPanel({ filters, onUpdate, accent = 'leaf' }: HotelFiltersPanelProps) {
+  const { t } = useTranslations()
   /* BACKUP accentBtn: bg-leaf-500 / bg-sky-500 */
   const accentBtn = 'bg-orange-500 border-orange-500 text-white hover:bg-orange-600'
   const accentHover = accent === 'leaf' ? 'hover:border-leaf-200' : 'hover:border-sky-200'
@@ -53,7 +55,7 @@ export function HotelFiltersPanel({ filters, onUpdate, accent = 'leaf' }: HotelF
           <span>€{filters.priceMin}</span>
           <span>€{filters.priceMax}</span>
         </div>
-        <label className="block text-[11px] text-slate-400 mb-1">Minimum</label>
+        <label className="block text-[11px] text-slate-400 mb-1">{t('hotelFilters.min')}</label>
         <input
           type="range"
           min={0}
@@ -66,7 +68,7 @@ export function HotelFiltersPanel({ filters, onUpdate, accent = 'leaf' }: HotelF
           }}
           className={cn('w-full mb-3', accentRange)}
         />
-        <label className="block text-[11px] text-slate-400 mb-1">Maksimum</label>
+        <label className="block text-[11px] text-slate-400 mb-1">{t('hotelFilters.max')}</label>
         <input
           type="range"
           min={0}
@@ -133,7 +135,7 @@ export function HotelFiltersPanel({ filters, onUpdate, accent = 'leaf' }: HotelF
             </button>
           ))}
         </div>
-        <p className="text-[11px] text-slate-400 mt-1.5">Prazno = vsi tipi</p>
+        <p className="text-[11px] text-slate-400 mt-1.5">{t('hotelFilters.emptyAllTypes')}</p>
       </section>
 
       <section>
@@ -187,7 +189,7 @@ export function HotelFiltersPanel({ filters, onUpdate, accent = 'leaf' }: HotelF
           <FilterChip
             active={filters.hasBreakfast === true}
             onClick={() => toggleBool('hasBreakfast')}
-            label="Zajtrk"
+            label={t('common.breakfast')}
             icon={<Coffee className="w-3.5 h-3.5" />}
             accentBtn={accentBtn}
             accentHover={accentHover}

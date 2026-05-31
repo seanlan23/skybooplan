@@ -8,6 +8,7 @@ export const zh: Messages = {
     generatingPlan: '正在生成行程…',
     confirm: '确认',
     notSet: '未设置',
+    breakfast: '早餐',
   },
   nav: {
     flights: '航班',
@@ -212,6 +213,34 @@ export const zh: Messages = {
     noHotelsForDates: '{city} 在这些日期没有可用酒店。',
     filterNoMatch: '没有符合所选位置的酒店 — 请尝试其他筛选条件。',
     selectDestination: '选择目的地',
+  },
+  map: {
+    loading: '正在加载地图…',
+  },
+  propertyCard: {
+    total: '合计',
+  },
+  itinerary: {
+    tripSummary: '行程摘要',
+    backupDay: '备用 / 雨天',
+  },
+  hotelFilters: {
+    title: '筛选',
+    min: '最低',
+    max: '最高',
+    emptyAllTypes: '空 = 所有类型',
+  },
+  flightBooking: {
+    lastName: '姓氏',
+    dateOfBirth: '出生日期',
+    male: '男',
+    female: '女',
+    passportNumber: '护照号码',
+    countryIso: '国家 (ISO)',
+    passportExpiry: '护照有效期',
+  },
+  nights: {
+    label: '晚数',
   },
   footer: {
     copyright: '© 2026 skybooplan.com · 所有价格仅供参考。',

@@ -8,6 +8,7 @@ export const nl: Messages = {
     generatingPlan: 'Plan wordt gegenereerd…',
     confirm: 'Bevestigen',
     notSet: 'niet ingesteld',
+    breakfast: 'Ontbijt',
   },
   nav: {
     flights: 'Vluchten',
@@ -212,6 +213,34 @@ export const nl: Messages = {
     noHotelsForDates: 'Geen hotels voor deze data in {city}.',
     filterNoMatch: 'Geen hotels komen overeen met de geselecteerde locatie — probeer een ander filter.',
     selectDestination: 'Bestemming selecteren',
+  },
+  map: {
+    loading: 'Kaart laden…',
+  },
+  propertyCard: {
+    total: 'Totaal',
+  },
+  itinerary: {
+    tripSummary: 'Reisoverzicht',
+    backupDay: 'Reserve- / regendag',
+  },
+  hotelFilters: {
+    title: 'Filters',
+    min: 'Minimum',
+    max: 'Maximum',
+    emptyAllTypes: 'Leeg = alle types',
+  },
+  flightBooking: {
+    lastName: 'Achternaam',
+    dateOfBirth: 'Geboortedatum',
+    male: 'Man',
+    female: 'Vrouw',
+    passportNumber: 'Paspoortnummer',
+    countryIso: 'Land (ISO)',
+    passportExpiry: 'Paspoort vervaldatum',
+  },
+  nights: {
+    label: 'Nachten',
   },
   footer: {
     copyright: '© 2026 skybooplan.com · Alle prijzen zijn indicatief.',

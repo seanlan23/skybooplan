@@ -16,6 +16,7 @@ import { SkeletonCard } from '@/components/ui/Skeleton'
 import { filterAndSortAccommodations } from '@/lib/filterAccommodations'
 import { cleanCityForBookingApi, formatHotelDisplayLocation } from '@/lib/bookingLocation'
 import { cn } from '@/lib/utils'
+import { useTranslations } from '@/i18n/LocaleProvider'
 
 const INITIAL_HOTEL_COUNT = 6
 
@@ -30,6 +31,7 @@ interface HotelAggregatorProps {
 }
 
 export default function HotelAggregator({ layout = 'sidebar' }: HotelAggregatorProps) {
+  const { t } = useTranslations()
   useHotelSearchSync()
   useAccommodations()
 
@@ -91,7 +93,7 @@ export default function HotelAggregator({ layout = 'sidebar' }: HotelAggregatorP
       <div className="w-16 h-16 bg-sky-50 rounded-full flex items-center justify-center mb-4">
         <MapPin className="w-8 h-8 text-sky-300" />
       </div>
-      <h3 className="font-display font-bold text-slate-700 text-lg mb-2">Izberi destinacijo</h3>
+      <h3 className="font-display font-bold text-slate-700 text-lg mb-2">{t('hotels.selectDestination')}</h3>
       <p className="text-slate-400 text-sm leading-relaxed max-w-md">
         {isWideLayout
           ? 'Vnesi kraj in datume zgoraj, nato klikni «Išči namestitve».'

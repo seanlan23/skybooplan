@@ -8,6 +8,7 @@ export const ja: Messages = {
     generatingPlan: 'プランを生成中…',
     confirm: '確認',
     notSet: '未設定',
+    breakfast: '朝食',
   },
   nav: {
     flights: 'フライト',
@@ -212,6 +213,34 @@ export const ja: Messages = {
     noHotelsForDates: '{city}でこの日程のホテルはありません。',
     filterNoMatch: '選択した場所に一致するホテルがありません — 別のフィルターをお試しください。',
     selectDestination: '目的地を選択',
+  },
+  map: {
+    loading: '地図を読み込み中…',
+  },
+  propertyCard: {
+    total: '合計',
+  },
+  itinerary: {
+    tripSummary: '旅行の概要',
+    backupDay: '予備 / 雨天の日',
+  },
+  hotelFilters: {
+    title: 'フィルター',
+    min: '最小',
+    max: '最大',
+    emptyAllTypes: '空 = すべてのタイプ',
+  },
+  flightBooking: {
+    lastName: '姓',
+    dateOfBirth: '生年月日',
+    male: '男性',
+    female: '女性',
+    passportNumber: 'パスポート番号',
+    countryIso: '国 (ISO)',
+    passportExpiry: 'パスポート有効期限',
+  },
+  nights: {
+    label: '泊数',
   },
   footer: {
     copyright: '© 2026 skybooplan.com · すべての価格は目安です。',

@@ -2,6 +2,7 @@
 
 import { RotateCcw } from 'lucide-react'
 import { useAccomStore } from '@/store/useAccomStore'
+import { useTranslations } from '@/i18n/LocaleProvider'
 import { HotelFiltersPanel } from './HotelFiltersPanel'
 
 /**
@@ -9,13 +10,14 @@ import { HotelFiltersPanel } from './HotelFiltersPanel'
  * Na strani z namestitvami se filtri odprejo prek HotelFiltersModal + HotelResultsToolbar.
  */
 export function HotelFiltersSidebar() {
+  const { t } = useTranslations()
   const { filters, updateFilter, resetFilters } = useAccomStore()
 
   return (
     <aside className="w-full lg:w-1/4 shrink-0">
       <div className="sticky top-4 bg-white border border-slate-100 rounded-2xl shadow-card p-5 space-y-6">
         <div className="flex items-center justify-between">
-          <h3 className="font-display font-bold text-slate-900 text-lg">Filtri</h3>
+          <h3 className="font-display font-bold text-slate-900 text-lg">{t('hotelFilters.title')}</h3>
           <button
             type="button"
             onClick={() => resetFilters()}

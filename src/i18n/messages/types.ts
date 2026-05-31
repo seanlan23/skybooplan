@@ -6,6 +6,7 @@ export type Messages = {
     generatingPlan: string
     confirm: string
     notSet: string
+    breakfast: string
   }
   nav: {
     flights: string
@@ -206,6 +207,34 @@ export type Messages = {
     noHotelsForDates: string
     filterNoMatch: string
     selectDestination: string
+  }
+  map: {
+    loading: string
+  }
+  propertyCard: {
+    total: string
+  }
+  itinerary: {
+    tripSummary: string
+    backupDay: string
+  }
+  hotelFilters: {
+    title: string
+    min: string
+    max: string
+    emptyAllTypes: string
+  }
+  flightBooking: {
+    lastName: string
+    dateOfBirth: string
+    male: string
+    female: string
+    passportNumber: string
+    countryIso: string
+    passportExpiry: string
+  }
+  nights: {
+    label: string
   }
   footer: {
     copyright: string

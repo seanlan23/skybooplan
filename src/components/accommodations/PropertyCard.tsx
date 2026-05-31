@@ -7,6 +7,7 @@ import { BookingRatingBadge } from '@/components/accommodations/BookingRatingBad
 import { cleanCityForBookingApi, formatHotelDisplayLocation } from '@/lib/bookingLocation'
 import { toHdBookingImageUrl } from '@/lib/hotelGallery'
 import { cn } from '@/lib/utils'
+import { useTranslations } from '@/i18n/LocaleProvider'
 import type { Accommodation } from '@/types/accommodation.types'
 
 const PLACEHOLDER_IMAGE =
@@ -20,8 +21,12 @@ const SOURCE_STYLES = {
 
 const AMENITY_ICONS: Record<string, React.ReactNode> = {
   WiFi: <Wifi className="w-3 h-3" />,
-  Zajtrk: <Coffee className="w-3 h-3" />,
   Bazen: <Waves className="w-3 h-3" />,
+}
+
+function isBreakfastAmenity(name: string): boolean {
+  const n = name.toLowerCase()
+  return n === 'zajtrk' || n === 'breakfast' || n.includes('breakfast')
 }
 
 interface PropertyCardProps {
@@ -33,6 +38,7 @@ interface PropertyCardProps {
 }
 
 export function PropertyCard({ accom, index, onOpen, wide = false }: PropertyCardProps) {
+  const { t } = useTranslations()
   const src = SOURCE_STYLES[accom.source]
   const [imgBroken, setImgBroken] = useState(false)
   const imageSrc =
@@ -118,7 +124,7 @@ export function PropertyCard({ accom, index, onOpen, wide = false }: PropertyCar
           {accom.hasBreakfast ? (
             <div className="flex items-center gap-1 mb-3 flex-wrap">
               <span className="inline-flex items-center gap-0.5 text-xs text-leaf-600 font-medium">
-                <Coffee className="w-3 h-3" /> Zajtrk
+                <Coffee className="w-3 h-3" /> {t('common.breakfast')}
               </span>
             </div>
           ) : null}
@@ -129,8 +135,8 @@ export function PropertyCard({ accom, index, onOpen, wide = false }: PropertyCar
                 key={a}
                 className="inline-flex items-center gap-1 px-2 py-0.5 bg-slate-50 text-slate-500 text-xs rounded-lg border border-slate-100"
               >
-                {AMENITY_ICONS[a] ?? null}
-                {a}
+                {AMENITY_ICONS[a] ?? (isBreakfastAmenity(a) ? <Coffee className="w-3 h-3" /> : null)}
+                {isBreakfastAmenity(a) ? t('common.breakfast') : a}
               </span>
             ))}
           </div>
@@ -142,7 +148,7 @@ export function PropertyCard({ accom, index, onOpen, wide = false }: PropertyCar
             <span className="text-slate-400 text-sm">/noč</span>
           </div>
           <div className="text-right">
-            <p className="text-xs text-slate-400">Skupaj</p>
+            <p className="text-xs text-slate-400">{t('propertyCard.total')}</p>
             <p className="text-sm font-semibold text-slate-700">€{totalPrice}</p>
           </div>
         </div>

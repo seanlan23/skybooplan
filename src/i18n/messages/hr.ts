@@ -8,6 +8,7 @@ export const hr: Messages = {
     generatingPlan: 'Generiram plan…',
     confirm: 'Potvrdi',
     notSet: 'nije određeno',
+    breakfast: 'Doručak',
   },
   nav: {
     flights: 'Letovi',
@@ -212,6 +213,34 @@ export const hr: Messages = {
     noHotelsForDates: 'Nema hotela za ove datume u {city}.',
     filterNoMatch: 'Nijedan hotel ne odgovara odabranoj lokaciji — pokušaj drugi filter.',
     selectDestination: 'Odaberi destinaciju',
+  },
+  map: {
+    loading: 'Učitavam kartu…',
+  },
+  propertyCard: {
+    total: 'Ukupno',
+  },
+  itinerary: {
+    tripSummary: 'Sažetak putovanja',
+    backupDay: 'Rezervni / kišni dan',
+  },
+  hotelFilters: {
+    title: 'Filteri',
+    min: 'Minimum',
+    max: 'Maksimum',
+    emptyAllTypes: 'Prazno = svi tipovi',
+  },
+  flightBooking: {
+    lastName: 'Prezime',
+    dateOfBirth: 'Datum rođenja',
+    male: 'Muški',
+    female: 'Ženski',
+    passportNumber: 'Broj putovnice',
+    countryIso: 'Država (ISO)',
+    passportExpiry: 'Valjanost putovnice',
+  },
+  nights: {
+    label: 'Noći',
   },
   footer: {
     copyright: '© 2026 skybooplan.com · Sve cijene su informativne.',
