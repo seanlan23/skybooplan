@@ -12,6 +12,7 @@ import AIPlanner from '@/components/planner/AIPlanner'
 import HotelAggregator from '@/components/accommodations/HotelAggregator'
 import { FlightResults } from '@/components/search/FlightResults'
 import { MapViewDynamic } from '@/components/map/MapViewDynamic'
+import { AiPlannerMap } from '@/components/planner/AiPlannerMap'
 import { useFlightSearch } from '@/hooks/useFlightSearch'
 import { useSkyscannerRedirect } from '@/hooks/useSkyscannerRedirect'
 import { useFlightResultsColumnHeight } from '@/hooks/useFlightResultsColumnHeight'
@@ -157,13 +158,20 @@ export function FlightsPlanGridSection() {
                   {t('planner.backToFlights')}
                 </button>
 
-                <MapViewDynamic
-                  key={mapInstanceKey}
-                  fromCode={selectedFlight?.origin ?? ''}
-                  toCode={selectedFlight?.destination ?? ''}
-                  itineraryDays={mapItineraryDays}
-                  className="flex-1 w-full min-h-[320px] lg:min-h-0 h-[min(52vh,480px)] lg:h-full rounded-xl border border-slate-200 shadow-md overflow-hidden"
-                />
+                {itinerary.length > 0 ? (
+                  <AiPlannerMap
+                    key={mapInstanceKey}
+                    className="flex-1 w-full min-h-[320px] lg:min-h-0 h-[min(52vh,480px)] lg:h-full rounded-xl border border-slate-200 shadow-md overflow-hidden"
+                  />
+                ) : (
+                  <MapViewDynamic
+                    key={mapInstanceKey}
+                    fromCode={selectedFlight?.origin ?? ''}
+                    toCode={selectedFlight?.destination ?? ''}
+                    itineraryDays={mapItineraryDays}
+                    className="flex-1 w-full min-h-[320px] lg:min-h-0 h-[min(52vh,480px)] lg:h-full rounded-xl border border-slate-200 shadow-md overflow-hidden"
+                  />
+                )}
               </div>
             ) : (
               <FlightResults
