@@ -62,6 +62,9 @@ export interface MapViewItineraryDay {
   dayNumber: number
   location: string
   transportFromPrevious?: TransportFromPrevious | null
+  /** Če AI agent že vrne koordinate, jih uporabimo brez geocoding klica */
+  locationLat?: number
+  locationLon?: number
 }
 
 export interface MapViewProps {
@@ -80,13 +83,23 @@ function cityNameFromLocation(location: string): string {
   return location.split(',')[0]?.trim() ?? ''
 }
 
-async function geocodeCity(cityName: string): Promise<[number, number] | null> {
-  const url = `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(cityName)}.json?limit=1&access_token=${encodeURIComponent(token)}`
-  const res = await fetch(url)
-  const data = (await res.json()) as {
-    features?: { geometry?: { coordinates?: [number, number] } }[]
+async function geocodeCity(query: string): Promise<[number, number] | null> {
+  // Klient več NE kliče Mapbox direktno — gre skozi naš /api/geocode,
+  // ki ima cache in pravilno country-bias logiko.
+  const parts = query.split(',').map((p) => p.trim()).filter(Boolean)
+  const country = parts.length > 1 ? parts[parts.length - 1] : ''
+  const url = new URL('/api/geocode', window.location.origin)
+  url.searchParams.set('q', query)
+  if (country.length === 2) url.searchParams.set('country', country)
+  try {
+    const res = await fetch(url.toString())
+    if (!res.ok) return null
+    const data = (await res.json()) as { lng?: number; lat?: number }
+    if (typeof data.lng !== 'number' || typeof data.lat !== 'number') return null
+    return [data.lng, data.lat]
+  } catch {
+    return null
   }
-  return data.features?.[0]?.geometry?.coordinates ?? null
 }
 
 function waitForMapLoad(instance: mapboxgl.Map): Promise<void> {
@@ -326,19 +339,28 @@ export default function MapView({
       const dayPoints: ItineraryDayRouteInput[] = []
 
       for (const day of itineraryDays) {
-        const cityName = cityNameFromLocation(day.location ?? '')
+        const fullLocation = day.location?.trim() ?? ''
+        const cityName = cityNameFromLocation(fullLocation)
         if (!cityName) continue
 
-        let baseCoords = geocodeCache.get(cityName)
+        // 1) Prednost: koordinate, ki jih je AI agent že priložil
+        let baseCoords: [number, number] | undefined
+        if (typeof day.locationLat === 'number' && typeof day.locationLon === 'number') {
+          baseCoords = [day.locationLon, day.locationLat]
+        }
+        // 2) Sicer geocoding skozi naš API (s polnim "City, Country")
         if (!baseCoords) {
-          try {
-            const fetched = await geocodeCity(cityName)
-            if (!fetched) continue
-            baseCoords = fetched
-            geocodeCache.set(cityName, baseCoords)
-          } catch (e) {
-            console.error('Geocoding failed for', cityName, e)
-            continue
+          baseCoords = geocodeCache.get(fullLocation)
+          if (!baseCoords) {
+            try {
+              const fetched = await geocodeCity(fullLocation || cityName)
+              if (!fetched) continue
+              baseCoords = fetched
+              geocodeCache.set(fullLocation, baseCoords)
+            } catch (e) {
+              console.error('Geocoding failed for', fullLocation, e)
+              continue
+            }
           }
         }
 

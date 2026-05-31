@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 
-const MAPBOX_TOKEN = process.env.NEXT_PUBLIC_MAPBOX_TOKEN ?? ''
+const MAPBOX_TOKEN =
+  process.env.MAPBOX_SERVER_TOKEN ?? process.env.NEXT_PUBLIC_MAPBOX_TOKEN ?? ''
 
 export async function GET(req: NextRequest) {
   const q = req.nextUrl.searchParams.get('q')?.trim()
@@ -22,7 +23,10 @@ export async function GET(req: NextRequest) {
   url.searchParams.set('types', 'place,locality')
 
   if (country && country.length === 2) {
-    url.searchParams.set('country', country)
+    url.searchParams.set('country', country.toLowerCase())
+  } else if (country && country.length > 2) {
+    // Pošlje celo ime države (npr. "France") kot del query-ja — Mapbox razume
+    // V tem primeru NE nastavljamo country filtra, pač pa zaupamo q
   }
 
   try {

@@ -42,7 +42,9 @@ export function FlightsPlanGridSection() {
       itinerary.map((d) => ({
         dayNumber: d.day,
         location: d.location,
-        transportFromPrevious: d.transportFromPrevious,
+        transportFromPrevious: d.transportFromPrevious ?? null,
+        locationLat: d.locationLat,
+        locationLon: d.locationLon,
       })),
     [itinerary]
   )

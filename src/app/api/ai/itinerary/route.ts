@@ -212,6 +212,15 @@ export async function POST(req: NextRequest) {
         }
 
         let itinerary = enforceShortTripItinerary(mergedDays, destLabel, totalDays)
+        // 🗺️ Sinhronizacija z Mapbox: napolni locationLat/locationLon
+        try {
+          const { attachCoordsToItinerary } = await import(
+            '@/lib/itineraryGeocode.server'
+          )
+          itinerary = await attachCoordsToItinerary(itinerary)
+        } catch (e) {
+          console.warn('[itinerary] geocoding failed, continuing without coords', e)
+        }
         const completeness = assessItineraryCompleteness(itinerary, travelNights)
         logIncompleteItineraryWarning(completeness)
 
