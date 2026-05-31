@@ -9,6 +9,7 @@ import {
   type OfferLegDisplay,
   type StopsLabels,
 } from '@/lib/flightOfferLegs'
+import type { FlightBadge } from '@/lib/flightSort'
 import { formatFlightPrice } from '@/lib/flightCurrency'
 import type { FlightOffer } from '@/types/flight.types'
 import { cn } from '@/lib/utils'
@@ -16,6 +17,7 @@ import { useTranslations } from '@/i18n/LocaleProvider'
 
 export interface FlightCardProps {
   offer: FlightOffer
+  badges?: FlightBadge[]
   travelerLabel?: string
   selected?: boolean
   onSelect?: () => void
@@ -140,6 +142,7 @@ function SkyscannerLegRow({
 
 export function FlightCard({
   offer,
+  badges,
   travelerLabel = '1 traveler',
   selected = false,
   onSelect,
@@ -181,6 +184,20 @@ export function FlightCard({
 
         <div className="flex flex-row lg:flex-col items-center lg:items-stretch justify-between gap-4 px-5 py-4 lg:py-5 lg:w-[200px] lg:shrink-0 border-t lg:border-t-0 lg:border-l border-slate-100 bg-white">
           <div className="lg:text-right flex-1 lg:flex-none min-w-0">
+            {badges && badges.length > 0 && (
+              <div className="flex flex-wrap gap-1 mb-2 lg:justify-end">
+                {badges.includes('cheapest') && (
+                  <span className="inline-flex items-center rounded-full bg-green-100 px-2 py-0.5 text-[10px] font-semibold text-green-800">
+                    {t('flights.badge.cheapest')}
+                  </span>
+                )}
+                {badges.includes('fastest') && (
+                  <span className="inline-flex items-center rounded-full bg-sky-100 px-2 py-0.5 text-[10px] font-semibold text-sky-800">
+                    {t('flights.badge.fastest')}
+                  </span>
+                )}
+              </div>
+            )}
             <p className="text-xs text-slate-500 mb-1">{travelerLabel}</p>
             <p className="text-2xl sm:text-[28px] font-bold text-slate-900 tabular-nums leading-none tracking-tight">
               {priceLabel}

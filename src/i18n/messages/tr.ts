@@ -142,6 +142,17 @@ export const tr: Messages = {
     co2Tooltip: 'Duffel API tahmini; bu aramadaki diğer kartlarla karşılaştırma.',
     selectForAi: 'YZ planı için seç',
     selectedForAi: 'YZ için seçildi',
+    sortBy: 'Sırala',
+    sort: {
+      cheapest: 'En ucuz',
+      fastest: 'En hızlı',
+      stops: 'En az aktarma',
+      best: 'En iyi',
+    },
+    badge: {
+      cheapest: 'En ucuz',
+      fastest: 'En hızlı',
+    },
     sortBest: 'En iyi',
     sortCheapest: 'En ucuz',
     sortFastest: 'En hızlı',

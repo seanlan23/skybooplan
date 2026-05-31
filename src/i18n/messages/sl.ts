@@ -143,6 +143,17 @@ export const sl: Messages = {
     co2Tooltip: 'Ocena iz Duffel API; primerjava z drugimi karticami v tem iskanju.',
     selectForAi: 'Izberi za AI načrt',
     selectedForAi: 'Izbrano za AI',
+    sortBy: 'Razvrsti po',
+    sort: {
+      cheapest: 'Najcenejši',
+      fastest: 'Najhitrejši',
+      stops: 'Najmanj postankov',
+      best: 'Najboljši',
+    },
+    badge: {
+      cheapest: 'Najcenejši',
+      fastest: 'Najhitrejši',
+    },
     sortBest: 'Najboljše',
     sortCheapest: 'Najcenejše',
     sortFastest: 'Najhitrejše',

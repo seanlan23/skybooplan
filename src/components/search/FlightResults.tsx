@@ -15,12 +15,18 @@ import { useSearchStore } from '@/store/useSearchStore'
 import { offerToSelectedFlightForAI } from '@/lib/flightSelection'
 import { MOCK_ROUND_TRIP_OFFERS } from '@/lib/mockFlightOffers'
 import { FlightOfferRow } from './FlightOfferRow'
-import { FlightSortTabs } from './FlightSortTabs'
-import { sortFlightOffers, sortTabPriceHints, type FlightSortMode } from '@/lib/sortFlights'
+import { getBadges, sortFlights, type SortMode } from '@/lib/flightSort'
 import { getTravelpayoutsPendingNote } from '@/config/travelpayouts'
 import type { FlightOffer } from '@/types/flight.types'
 import { cn } from '@/lib/utils'
 import { useTranslations } from '@/i18n/LocaleProvider'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
 
 interface FlightResultsProps {
   offers: FlightOffer[]
@@ -50,6 +56,8 @@ function FlightListScroller({ children, embedded }: { children: ReactNode; embed
   )
 }
 
+const SORT_OPTIONS: SortMode[] = ['cheapest', 'fastest', 'stops', 'best']
+
 export function FlightResults({
   offers,
   isSearching,
@@ -67,7 +75,7 @@ export function FlightResults({
   const { selectFlightForAI, clearSelectedFlight, isSelected } = useSelectedFlightStore()
   const destination = useSearchStore((s) => s.destination)
   const origins = useSearchStore((s) => s.origins)
-  const [sortMode, setSortMode] = useState<FlightSortMode>('best')
+  const [sortMode, setSortMode] = useState<SortMode>('cheapest')
   const [showAllCards, setShowAllCards] = useState(false)
 
   /** Primeri le pred prvim iskanjem — po iskanju pokaži prave ali prazen seznam. */
@@ -92,14 +100,16 @@ export function FlightResults({
   const offersKey = displayOffers.map((o) => o.id).join(',')
 
   useEffect(() => {
-    setSortMode('best')
+    setSortMode('cheapest')
     setShowAllCards(false)
   }, [offersKey])
 
   const sortedOffers = useMemo(
-    () => sortFlightOffers(displayOffers, sortMode),
+    () => sortFlights(displayOffers, sortMode),
     [displayOffers, sortMode]
   )
+
+  const badgeMap = useMemo(() => getBadges(displayOffers), [displayOffers])
 
   const visibleOffers = useMemo(() => {
     if (showMockPreview || showAllCards) return sortedOffers
@@ -112,17 +122,7 @@ export function FlightResults({
   const canShowFewerCards =
     !showMockPreview && !isSearching && hiddenCardCount > 0 && showAllCards
 
-  const priceHints = useMemo(() => {
-    if (!displayOffers.length || showMockPreview) return undefined
-    return sortTabPriceHints(displayOffers)
-  }, [displayOffers, showMockPreview])
-
-  const sortLabel =
-    sortMode === 'best'
-      ? t('flights.sortBestLabel')
-      : sortMode === 'cheapest'
-        ? t('flights.sortCheapestLabel')
-        : t('flights.sortFastestLabel')
+  const sortLabel = t(`flights.sort.${sortMode}`)
 
   const flightUnitLabel = (count: number) =>
     count === 1
@@ -131,7 +131,7 @@ export function FlightResults({
         ? t('flights.flightUnitTwo')
         : t('flights.flightUnitMany')
 
-  const showSortTabs = !isSearching && sortedOffers.length > 0
+  const showSortDropdown = !isSearching && sortedOffers.length > 0
   const travelpayoutsNote = getTravelpayoutsPendingNote()
 
   if (!embedded && !isSearching && !offers.length && !error && !skyscannerUrl && !hasSearched)
@@ -203,12 +203,27 @@ export function FlightResults({
 
         {!isSearching && sortedOffers.length > 0 && (
           <>
-            {showSortTabs && (
-              <FlightSortTabs
-                active={sortMode}
-                onChange={setSortMode}
-                priceHints={showMockPreview ? undefined : priceHints}
-              />
+            {showSortDropdown && (
+              <div className="flex items-center gap-2 mb-3 shrink-0">
+                <label
+                  htmlFor="flight-sort-select"
+                  className="text-sm font-medium text-slate-600 shrink-0"
+                >
+                  {t('flights.sortBy')}
+                </label>
+                <Select value={sortMode} onValueChange={(v) => setSortMode(v as SortMode)}>
+                  <SelectTrigger id="flight-sort-select" className="w-full max-w-[220px]">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {SORT_OPTIONS.map((mode) => (
+                      <SelectItem key={mode} value={mode}>
+                        {t(`flights.sort.${mode}`)}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
             )}
 
             <FlightListScroller embedded={embedded}>
@@ -216,6 +231,7 @@ export function FlightResults({
                 <FlightOfferRow
                   key={offer.id}
                   offer={offer}
+                  badges={badgeMap.get(offer.id)}
                   selectedForAI={isSelected(offer.id)}
                   onSelectOffer={() => onSelectOffer?.(offer)}
                   onSelectForAI={(e) => handleSelectForAI(offer, e)}

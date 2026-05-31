@@ -142,6 +142,17 @@ export const pt: Messages = {
     co2Tooltip: 'Estimativa da Duffel API; comparado com outros cartões nesta pesquisa.',
     selectForAi: 'Selecionar para plano IA',
     selectedForAi: 'Selecionado para IA',
+    sortBy: 'Ordenar por',
+    sort: {
+      cheapest: 'Mais barato',
+      fastest: 'Mais rápido',
+      stops: 'Menos escalas',
+      best: 'Melhor',
+    },
+    badge: {
+      cheapest: 'Mais barato',
+      fastest: 'Mais rápido',
+    },
     sortBest: 'Melhor',
     sortCheapest: 'Mais barato',
     sortFastest: 'Mais rápido',

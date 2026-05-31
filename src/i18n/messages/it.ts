@@ -142,6 +142,17 @@ export const it: Messages = {
     co2Tooltip: 'Stima da Duffel API; confronto con le altre schede in questa ricerca.',
     selectForAi: 'Seleziona per piano IA',
     selectedForAi: 'Selezionato per IA',
+    sortBy: 'Ordina per',
+    sort: {
+      cheapest: 'Più economico',
+      fastest: 'Più veloce',
+      stops: 'Meno scali',
+      best: 'Migliore',
+    },
+    badge: {
+      cheapest: 'Più economico',
+      fastest: 'Più veloce',
+    },
     sortBest: 'Migliore',
     sortCheapest: 'Più economico',
     sortFastest: 'Più veloce',

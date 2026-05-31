@@ -4,12 +4,14 @@ import type { MouseEvent } from 'react'
 import { Sparkles } from 'lucide-react'
 import { FlightCard } from './FlightCard'
 import { useSearchStore } from '@/store/useSearchStore'
+import type { FlightBadge } from '@/lib/flightSort'
 import type { FlightOffer } from '@/types/flight.types'
 import { cn } from '@/lib/utils'
 import { useTranslations } from '@/i18n/LocaleProvider'
 
 interface FlightOfferRowProps {
   offer: FlightOffer
+  badges?: FlightBadge[]
   selectedForAI: boolean
   onSelectOffer?: () => void
   onSelectForAI: (e: MouseEvent) => void
@@ -17,6 +19,7 @@ interface FlightOfferRowProps {
 
 export function FlightOfferRow({
   offer,
+  badges,
   selectedForAI,
   onSelectOffer,
   onSelectForAI,
@@ -32,6 +35,7 @@ export function FlightOfferRow({
     <div className="shrink-0 space-y-0">
       <FlightCard
         offer={offer}
+        badges={badges}
         travelerLabel={travelerLabel}
         selected={selectedForAI}
         onSelect={onSelectOffer}

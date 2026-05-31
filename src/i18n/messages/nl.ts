@@ -142,6 +142,17 @@ export const nl: Messages = {
     co2Tooltip: 'Schatting van Duffel API; vergeleken met andere kaarten in deze zoekopdracht.',
     selectForAi: 'Selecteren voor AI-plan',
     selectedForAi: 'Geselecteerd voor AI',
+    sortBy: 'Sorteren op',
+    sort: {
+      cheapest: 'Goedkoopste',
+      fastest: 'Snelste',
+      stops: 'Minste stops',
+      best: 'Beste',
+    },
+    badge: {
+      cheapest: 'Goedkoopste',
+      fastest: 'Snelste',
+    },
     sortBest: 'Beste',
     sortCheapest: 'Goedkoopste',
     sortFastest: 'Snelste',

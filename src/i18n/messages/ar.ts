@@ -142,6 +142,17 @@ export const ar: Messages = {
     co2Tooltip: 'تقدير من Duffel API؛ مقارنة مع البطاقات الأخرى في هذا البحث.',
     selectForAi: 'اختر لخطة الذكاء الاصطناعي',
     selectedForAi: 'مختار للذكاء الاصطناعي',
+    sortBy: 'ترتيب حسب',
+    sort: {
+      cheapest: 'الأرخص',
+      fastest: 'الأسرع',
+      stops: 'أقل توقفات',
+      best: 'الأفضل',
+    },
+    badge: {
+      cheapest: 'الأرخص',
+      fastest: 'الأسرع',
+    },
     sortBest: 'الأفضل',
     sortCheapest: 'الأرخص',
     sortFastest: 'الأسرع',

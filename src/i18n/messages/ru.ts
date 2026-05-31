@@ -142,6 +142,17 @@ export const ru: Messages = {
     co2Tooltip: 'Оценка от Duffel API; сравнение с другими карточками в этом поиске.',
     selectForAi: 'Выбрать для плана ИИ',
     selectedForAi: 'Выбрано для ИИ',
+    sortBy: 'Сортировать по',
+    sort: {
+      cheapest: 'Дешевле',
+      fastest: 'Быстрее',
+      stops: 'Меньше пересадок',
+      best: 'Лучшие',
+    },
+    badge: {
+      cheapest: 'Дешевле',
+      fastest: 'Быстрее',
+    },
     sortBest: 'Лучшие',
     sortCheapest: 'Дешевле',
     sortFastest: 'Быстрее',

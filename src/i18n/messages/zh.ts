@@ -142,6 +142,17 @@ export const zh: Messages = {
     co2Tooltip: 'Duffel API 估算；与本次搜索中的其他卡片比较。',
     selectForAi: '选择用于 AI 规划',
     selectedForAi: '已选用于 AI',
+    sortBy: '排序方式',
+    sort: {
+      cheapest: '最便宜',
+      fastest: '最快',
+      stops: '最少经停',
+      best: '最佳',
+    },
+    badge: {
+      cheapest: '最便宜',
+      fastest: '最快',
+    },
     sortBest: '最佳',
     sortCheapest: '最便宜',
     sortFastest: '最快',

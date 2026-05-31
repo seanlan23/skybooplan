@@ -142,6 +142,17 @@ export const ja: Messages = {
     co2Tooltip: 'Duffel APIによる推定値。この検索の他のカードとの比較。',
     selectForAi: 'AIプラン用に選択',
     selectedForAi: 'AI用に選択済み',
+    sortBy: '並べ替え',
+    sort: {
+      cheapest: '最安',
+      fastest: '最速',
+      stops: '乗り継ぎ最少',
+      best: 'おすすめ',
+    },
+    badge: {
+      cheapest: '最安',
+      fastest: '最速',
+    },
     sortBest: 'おすすめ',
     sortCheapest: '最安',
     sortFastest: '最速',

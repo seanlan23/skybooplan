@@ -137,6 +137,17 @@ export type Messages = {
     co2Tooltip: string
     selectForAi: string
     selectedForAi: string
+    sortBy: string
+    sort: {
+      cheapest: string
+      fastest: string
+      stops: string
+      best: string
+    }
+    badge: {
+      cheapest: string
+      fastest: string
+    }
     sortBest: string
     sortCheapest: string
     sortFastest: string

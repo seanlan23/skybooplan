@@ -142,6 +142,17 @@ export const de: Messages = {
     co2Tooltip: 'Schätzung von Duffel API; Vergleich mit anderen Karten in dieser Suche.',
     selectForAi: 'Für KI-Plan auswählen',
     selectedForAi: 'Für KI ausgewählt',
+    sortBy: 'Sortieren nach',
+    sort: {
+      cheapest: 'Günstigste',
+      fastest: 'Schnellste',
+      stops: 'Wenigste Stopps',
+      best: 'Beste',
+    },
+    badge: {
+      cheapest: 'Günstigste',
+      fastest: 'Schnellste',
+    },
     sortBest: 'Beste',
     sortCheapest: 'Günstigste',
     sortFastest: 'Schnellste',
